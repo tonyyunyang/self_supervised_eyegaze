@@ -95,7 +95,7 @@ def prepare_mixed_data_loader(data, labels, batch_size, max_len):
     test_loader = DataLoader(dataset=test_classification_dataset, batch_size=batch_size, shuffle=False, num_workers=8,
                              pin_memory=True, collate_fn=lambda x: collate_superv(x, max_len=max_len))
 
-    return pretrain_loader, finetune_train_loader, finetune_val_loader, test_loader
+    return (pretrain_loader, finetune_train_loader, finetune_val_loader, test_loader), encoder
 
 
 def prepare_one_out_data_loader(train_data, train_labels, test_data, test_labels, batch_size, max_len):
@@ -138,7 +138,7 @@ def prepare_one_out_data_loader(train_data, train_labels, test_data, test_labels
     test_loader = DataLoader(dataset=test_classification_dataset, batch_size=batch_size, shuffle=False, num_workers=8,
                              pin_memory=True, collate_fn=lambda x: collate_superv(x, max_len=max_len))
 
-    return pretrain_loader, finetune_train_loader, finetune_val_loader, test_loader
+    return (pretrain_loader, finetune_train_loader, finetune_val_loader, test_loader), encoder
 
 
 def print_encoded_classes(encoder):
