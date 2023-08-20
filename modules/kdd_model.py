@@ -156,13 +156,14 @@ class TransformerBatchNormEncoderLayer(nn.modules.Module):
         super(TransformerBatchNormEncoderLayer, self).__setstate__(state)
 
     def forward(self, src: Tensor, src_mask: Optional[Tensor] = None,
-                src_key_padding_mask: Optional[Tensor] = None) -> Tensor:
+                src_key_padding_mask: Optional[Tensor] = None, is_causal: Optional[bool] = None) -> Tensor:
         r"""Pass the input through the encoder layer.
 
         Args:
             src: the sequence to the encoder layer (required).
             src_mask: the mask for the src sequence (optional).
             src_key_padding_mask: the mask for the src keys per batch (optional).
+            is_causal: optional
 
         Shape:
             see the docs in Transformer class.

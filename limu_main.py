@@ -1,9 +1,10 @@
 import json
+import sys
 
-from modules.kdd_model import kdd_model4pretrain
-from modules.pretrain_hyperparameters import Pretrain_Hyperparameters
-from utils.load_data_from_file import *
-from utils.pretrain import *
+from modules.limu_model import limu_model4pretrain
+from modules.pretrain_hyperparameters import LIMU_Pretrain_Hyperparameters
+from utils.load_data_from_file import load_mixed_data, prepare_mixed_data_loader, load_one_out_data, \
+    prepare_one_out_data_loader
 
 
 def main():
@@ -39,12 +40,12 @@ def main():
         print("Either Mixed / One_out")
         sys.exit()
 
-    hyperparameters = Pretrain_Hyperparameters(config)
-    model = kdd_model4pretrain(config, feat_dim)
+    hyperparameters = LIMU_Pretrain_Hyperparameters(config)
+    model = limu_model4pretrain(config, feat_dim)
     loss = hyperparameters.loss
     optimizer = hyperparameters.optimizer(model.parameters(), hyperparameters.lr, weight_decay=hyperparameters.weight_decay)
 
-    pretrain_kdd_model(model, loss, optimizer, eyegaze_data_loader[0], config)
+    # pretrain_kdd_model(model, loss, optimizer, eyegaze_data_loader[0], config)
 
 
 if __name__ == "__main__":

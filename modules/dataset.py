@@ -13,6 +13,7 @@ class ImputationDataset(Dataset):
         self.data = data  # this is a subclass of the BaseData class in data.py
         self.IDs = indices  # list of data IDs, but also mapping between integer index and ID
         self.feature_data = self.get_feature_subset(self.data, self.IDs)
+        # self.feature_df = self.data.loc[self.IDs]
 
         self.masking_ratio = masking_ratio
         self.mean_mask_length = mean_mask_length
@@ -31,7 +32,8 @@ class ImputationDataset(Dataset):
             ID: ID of sample
         """
 
-        X = self.feature_df.loc[self.IDs[ind]].values  # (seq_length, feat_dim) array
+        # X = self.feature_df.loc[self.IDs[ind]].values  # (seq_length, feat_dim) array
+        X = self.feature_data[ind]
         mask = noise_mask(X, self.masking_ratio, self.mean_mask_length, self.mode, self.distribution,
                           self.exclude_feats)  # (seq_length, feat_dim) boolean array
 
@@ -39,7 +41,7 @@ class ImputationDataset(Dataset):
 
     def update(self):
         self.mean_mask_length = min(20, self.mean_mask_length + 1)
-        self.masking_ratio = min(1, self.masking_ratio + 0.05)
+        self.masking_ratio = min(0.999, self.masking_ratio + 0.05)
 
     def __len__(self):
         return len(self.IDs)
@@ -81,8 +83,8 @@ class TransductionDataset(Dataset):
         return torch.from_numpy(X), torch.from_numpy(mask), self.IDs[ind]
 
     def update(self):
-        self.start_hint = max(0, self.start_hint - 0.1)
-        self.end_hint = max(0, self.end_hint - 0.1)
+        self.start_hint = max(0.0, self.start_hint - 0.1)
+        self.end_hint = max(0.0, self.end_hint - 0.1)
 
     def __len__(self):
         return len(self.IDs)
@@ -119,8 +121,7 @@ def collate_superv(data, max_len=None):
 
     targets = torch.stack(labels, dim=0)  # (batch_size, num_labels)
 
-    padding_masks = padding_mask(torch.tensor(lengths, dtype=torch.int16),
-                                 max_len=max_len)  # (batch_size, padded_length) boolean tensor, "1" means keep
+    padding_masks = padding_mask(torch.tensor(lengths, dtype=torch.int16), max_len=max_len)  # (batch_size, padded_length) boolean tensor, "1" means keep
 
     return X, targets, padding_masks, IDs
 
@@ -135,6 +136,8 @@ class ClassiregressionDataset(Dataset):
         self.IDs = indices  # list of data IDs, but also mapping between integer index and ID
         self.feature_df = self.get_feature_subset(self.data, self.IDs)
         self.labels_df = self.get_feature_subset(self.labels, self.IDs)
+        # self.feature_df = self.data.loc[self.IDs]
+        # self.labels_df = self.labels.loc[self.IDs]
 
     def __getitem__(self, ind):
         """
@@ -147,9 +150,10 @@ class ClassiregressionDataset(Dataset):
             ID: ID of sample
         """
 
-        X = self.feature_df.loc[self.IDs[ind]].values  # (seq_length, feat_dim) array
-        y = self.labels_df.loc[self.IDs[ind]].values  # (num_labels,) array
-
+        # X = self.feature_df.loc[self.IDs[ind]].values  # (seq_length, feat_dim) array
+        X = self.feature_df[ind]
+        # y = self.labels_df.loc[self.IDs[ind]].values  # (num_labels,) array
+        y = self.labels_df[ind]
         return torch.from_numpy(X), torch.from_numpy(y), self.IDs[ind]
 
     def __len__(self):
@@ -224,8 +228,7 @@ def collate_unsuperv(data, max_len=None, mask_compensation=False):
     if max_len is None:
         max_len = max(lengths)
     X = torch.zeros(batch_size, max_len, features[0].shape[-1])  # (batch_size, padded_length, feat_dim)
-    target_masks = torch.zeros_like(X,
-                                    dtype=torch.bool)  # (batch_size, padded_length, feat_dim) masks related to objective
+    target_masks = torch.zeros_like(X, dtype=torch.bool)  # (batch_size, padded_length, feat_dim) masks related to objective
     for i in range(batch_size):
         end = min(lengths[i], max_len)
         X[i, :end, :] = features[i][:end, :]

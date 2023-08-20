@@ -1,6 +1,6 @@
 {
   "general": {
-    "test_mode": "Mixed",
+    "test_mode": "One_out",
     "window_size": 150,
     "overlap": 0.8,
     "pretrain_model": null,
@@ -8,24 +8,41 @@
     "freeze": false
   },
 
-  "pretrain": {
-    "epoch": 1000,
+  "kdd_pretrain": {
+    "epoch": 1,
     "lr": 0.001,
     "optimizer": "RAdam",
+    "weight_decay": null,
+    "task": "imputation",
+    "harden": false
+  },
+
+  "limu_pretrain": {
+    "epoch": 1000,
+    "lr": 0.001,
+    "optimizer": "Adam",
     "weight_decay": null,
     "task": "imputation"
   },
 
   "kdd_model": {
-    "d_hidden": 128,
-    "d_ff": 256,
-    "n_heads": 16,
-    "n_layers": 3,
+    "d_hidden": 16,
+    "d_ff": 32,
+    "n_heads": 4,
+    "n_layers": 1,
     "dropout": 0.1,
     "pos_encoding": "learnable",
     "activation": "gelu",
     "norm": "BatchNorm",
     "projection": "linear"
+  },
+
+  "limu_model": {
+    "d_hidden": 128,
+    "d_ff": 256,
+    "n_heads": 16,
+    "n_layers": 3,
+    "emb_norm": false
   }
 
 
