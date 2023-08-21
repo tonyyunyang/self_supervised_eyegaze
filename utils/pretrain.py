@@ -196,11 +196,6 @@ def pretrain_limu_model(model, loss, optimizer, pretrain_data, config):
 
         print(f"Epoch {epoch}/{config['limu_pretrain']['epoch']}, Train Loss: {train_loss:.4f}, Time: {epoch_runtime}")
 
-        # Difficulty scheduling
-        if config["limu_pretrain"]['harden'] and check_progress(epoch):
-            print("==========================Updating difficulty=========================")
-            pretrain_data.dataset.update()
-
     # Save the model for continuing the training
     torch.save(
         model.state_dict(), os.path.join(config["general"]["pretrain_model"], "continue_model.pth")
@@ -209,25 +204,21 @@ def pretrain_limu_model(model, loss, optimizer, pretrain_data, config):
     limu_pretrain_save_metrics(train_loss_list, config)
 
 
-def pretrain_limu_epoch(model, loss, optimizer, pretrain_data, config, device, l2_reg=False):
+def pretrain_limu_epoch(model, loss_fn, optimizer, pretrain_data, config, device, l2_reg=False):
+    loss_sum = 0.0
     model = model.train()
-    active_elements = 0
-    loss_sum = 0
     for i, batch in enumerate(pretrain_data):
-        X, targets, target_masks, padding_masks, IDs = batch
-        targets = targets.to(device)
-        target_masks = target_masks.to(device)  # 1s: mask and predict, 0s: unaffected input (ignore)
-        padding_masks = padding_masks.to(device)  # 0s: ignore
+        mask_seqs, masked_pos, seqs = batch
+        seqs = seqs.to(device)
 
         optimizer.zero_grad()
-        seq_recon = model(X.to(device))
-        # epoch_loss = loss(seq_recon, targets)
-        epoch_loss = loss(seq_recon, targets, target_masks)
-        epoch_loss = epoch_loss.mean()
-        epoch_loss.backward()
-        optimizer.step()
+        seq_recon = model(mask_seqs.to(device), masked_pos.to(device))
+        loss = loss_fn(seq_recon, seqs)
 
-        loss_sum += epoch_loss.item()
+        loss = loss.mean()
+        loss.backward()
+        optimizer.step()
+        loss_sum += loss.item()
 
     training_loss = loss_sum / len(pretrain_data)
     return training_loss

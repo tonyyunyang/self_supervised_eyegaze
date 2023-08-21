@@ -44,7 +44,7 @@ class LIMU_Pretrain_Hyperparameters:
             sys.exit()
 
         # self.loss = nn.MSELoss(reduction='none')  # outputs loss for each batch sample
-        self.loss = MaskedMSELoss(reduction='none')  # outputs loss for each batch element
+        self.loss = nn.MSELoss(reduction='none')
 
         weight_decay = config["limu_pretrain"]["weight_decay"]
         if weight_decay is None:

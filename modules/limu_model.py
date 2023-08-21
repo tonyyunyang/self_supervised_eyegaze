@@ -226,6 +226,7 @@ class LIMUBertModel4Pretrain(nn.Module):
         self.output_embed = output_embed
 
     def forward(self, input_seqs, masked_pos=None):
+
         h_masked = self.transformer(input_seqs)
         if self.output_embed:
             return h_masked

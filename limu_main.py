@@ -4,7 +4,7 @@ import sys
 from modules.limu_model import limu_model4pretrain
 from modules.pretrain_hyperparameters import LIMU_Pretrain_Hyperparameters
 from utils.load_data_from_file import load_mixed_data, prepare_mixed_data_loader, load_one_out_data, \
-    prepare_one_out_data_loader
+    prepare_one_out_data_loader, limu_prepare_mixed_data_loader, limu_prepare_one_out_data_loader
 from utils.pretrain import pretrain_limu_model
 
 
@@ -21,10 +21,10 @@ def main():
         num_classes = len(encoder.classes_)
         feat_dim = data[0].shape[1]
         labels_dim = labels.shape
-        print(f"The number of classes is {num_classes}, the feat_dim is {feat_dim}, the labels_dim is {labels_dim}")
+        print(f"The shape of data is {data.shape}, the feat_dim is {feat_dim}, the labels_dim is {labels_dim}")
 
-        eyegaze_data_loader = (prepare_mixed_data_loader
-                               (data, labels, batch_size=config["general"]["batch_size"],
+        eyegaze_data_loader = (limu_prepare_mixed_data_loader
+                               (config, data, labels, batch_size=config["general"]["batch_size"],
                                 max_len=config["general"]["window_size"]))
 
     elif config["general"]["test_mode"] == "One_out":
@@ -36,8 +36,8 @@ def main():
         feat_dim = train_data[0].shape[1]
         print(f"The number of classes is {num_classes}, the feat_dim is {feat_dim}")
 
-        eyegaze_data_loader = (prepare_one_out_data_loader
-                               (train_data, train_labels, test_data, test_labels,
+        eyegaze_data_loader = (limu_prepare_one_out_data_loader
+                               (config, train_data, train_labels, test_data, test_labels,
                                 batch_size=config["general"]["batch_size"],
                                 max_len=config["general"]["window_size"]))
     else:

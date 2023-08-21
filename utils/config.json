@@ -1,6 +1,6 @@
 {
   "general": {
-    "test_mode": "Mixed",
+    "test_mode": "One_out",
     "window_size": 150,
     "overlap": 0.8,
     "pretrain_model": null,
@@ -17,11 +17,19 @@
   },
 
   "limu_pretrain": {
-    "epoch": 1000,
+    "epoch": 10,
     "lr": 0.001,
     "optimizer": "Adam",
     "weight_decay": null,
     "harden": false
+  },
+
+  "limu_mask": {
+    "mask_ratio": 0.15,
+    "mask_alpha": 6,
+    "max_gram": 10,
+    "mask_prob": 0.8,
+    "replace_prob": 0.0
   },
 
   "kdd_model": {

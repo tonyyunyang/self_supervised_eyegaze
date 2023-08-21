@@ -52,6 +52,48 @@ class ImputationDataset(Dataset):
         return data[indices]
 
 
+def collate_unsuperv(data, max_len=None, mask_compensation=False):
+    """Build mini-batch tensors from a list of (X, mask) tuples. Mask input. Create
+    Args:
+        data: len(batch_size) list of tuples (X, mask).
+            - X: torch tensor of shape (seq_length, feat_dim); variable seq_length.
+            - mask: boolean torch tensor of shape (seq_length, feat_dim); variable seq_length.
+        max_len: global fixed sequence length. Used for architectures requiring fixed length input,
+            where the batch length cannot vary dynamically. Longer sequences are clipped, shorter are padded with 0s
+    Returns:
+        X: (batch_size, padded_length, feat_dim) torch tensor of masked features (input)
+        targets: (batch_size, padded_length, feat_dim) torch tensor of unmasked features (output)
+        target_masks: (batch_size, padded_length, feat_dim) boolean torch tensor
+            0 indicates masked values to be predicted, 1 indicates unaffected/"active" feature values
+        padding_masks: (batch_size, padded_length) boolean tensor, 1 means keep vector at this position, 0 ignore (padding)
+    """
+
+    batch_size = len(data)
+    features, masks, IDs = zip(*data)
+
+    # Stack and pad features and masks (convert 2D to 3D tensors, i.e. add batch dimension)
+    lengths = [X.shape[0] for X in features]  # original sequence length for each time series
+    if max_len is None:
+        max_len = max(lengths)
+    X = torch.zeros(batch_size, max_len, features[0].shape[-1])  # (batch_size, padded_length, feat_dim)
+    target_masks = torch.zeros_like(X,
+                                    dtype=torch.bool)  # (batch_size, padded_length, feat_dim) masks related to objective
+    for i in range(batch_size):
+        end = min(lengths[i], max_len)
+        X[i, :end, :] = features[i][:end, :]
+        target_masks[i, :end, :] = masks[i][:end, :]
+
+    targets = X.clone()
+    X = X * target_masks  # mask input
+    if mask_compensation:
+        X = compensate_masking(X, target_masks)
+
+    padding_masks = padding_mask(torch.tensor(lengths, dtype=torch.int16),
+                                 max_len=max_len)  # (batch_size, padded_length) boolean tensor, "1" means keep
+    target_masks = ~target_masks  # inverse logic: 0 now means ignore, 1 means predict
+    return X, targets, target_masks, padding_masks, IDs
+
+
 class TransductionDataset(Dataset):
 
     def __init__(self, data, indices, mask_feats, start_hint=0.0, end_hint=0.0):
@@ -121,7 +163,8 @@ def collate_superv(data, max_len=None):
 
     targets = torch.stack(labels, dim=0)  # (batch_size, num_labels)
 
-    padding_masks = padding_mask(torch.tensor(lengths, dtype=torch.int16), max_len=max_len)  # (batch_size, padded_length) boolean tensor, "1" means keep
+    padding_masks = padding_mask(torch.tensor(lengths, dtype=torch.int16),
+                                 max_len=max_len)  # (batch_size, padded_length) boolean tensor, "1" means keep
 
     return X, targets, padding_masks, IDs
 
@@ -204,46 +247,6 @@ def compensate_masking(X, mask):
     return X.shape[-1] * X / num_active
 
 
-def collate_unsuperv(data, max_len=None, mask_compensation=False):
-    """Build mini-batch tensors from a list of (X, mask) tuples. Mask input. Create
-    Args:
-        data: len(batch_size) list of tuples (X, mask).
-            - X: torch tensor of shape (seq_length, feat_dim); variable seq_length.
-            - mask: boolean torch tensor of shape (seq_length, feat_dim); variable seq_length.
-        max_len: global fixed sequence length. Used for architectures requiring fixed length input,
-            where the batch length cannot vary dynamically. Longer sequences are clipped, shorter are padded with 0s
-    Returns:
-        X: (batch_size, padded_length, feat_dim) torch tensor of masked features (input)
-        targets: (batch_size, padded_length, feat_dim) torch tensor of unmasked features (output)
-        target_masks: (batch_size, padded_length, feat_dim) boolean torch tensor
-            0 indicates masked values to be predicted, 1 indicates unaffected/"active" feature values
-        padding_masks: (batch_size, padded_length) boolean tensor, 1 means keep vector at this position, 0 ignore (padding)
-    """
-
-    batch_size = len(data)
-    features, masks, IDs = zip(*data)
-
-    # Stack and pad features and masks (convert 2D to 3D tensors, i.e. add batch dimension)
-    lengths = [X.shape[0] for X in features]  # original sequence length for each time series
-    if max_len is None:
-        max_len = max(lengths)
-    X = torch.zeros(batch_size, max_len, features[0].shape[-1])  # (batch_size, padded_length, feat_dim)
-    target_masks = torch.zeros_like(X, dtype=torch.bool)  # (batch_size, padded_length, feat_dim) masks related to objective
-    for i in range(batch_size):
-        end = min(lengths[i], max_len)
-        X[i, :end, :] = features[i][:end, :]
-        target_masks[i, :end, :] = masks[i][:end, :]
-
-    targets = X.clone()
-    X = X * target_masks  # mask input
-    if mask_compensation:
-        X = compensate_masking(X, target_masks)
-
-    padding_masks = padding_mask(torch.tensor(lengths, dtype=torch.int16), max_len=max_len)  # (batch_size, padded_length) boolean tensor, "1" means keep
-    target_masks = ~target_masks  # inverse logic: 0 now means ignore, 1 means predict
-    return X, targets, target_masks, padding_masks, IDs
-
-
 def noise_mask(X, masking_ratio, lm=3, mode='separate', distribution='geometric', exclude_feats=None):
     """
     Creates a random boolean mask of the same shape as X, with 0s at places where a feature should be masked.
@@ -298,7 +301,8 @@ def geom_noise_mask_single(L, lm, masking_ratio):
     """
     keep_mask = np.ones(L, dtype=bool)
     p_m = 1 / lm  # probability of each masking sequence stopping. parameter of geometric distribution.
-    p_u = p_m * masking_ratio / (1 - masking_ratio)  # probability of each unmasked sequence stopping. parameter of geometric distribution.
+    p_u = p_m * masking_ratio / (
+                1 - masking_ratio)  # probability of each unmasked sequence stopping. parameter of geometric distribution.
     p = [p_m, p_u]
 
     # Start in state 0 with masking_ratio probability
@@ -322,3 +326,100 @@ def padding_mask(lengths, max_len=None):
             .type_as(lengths)
             .repeat(batch_size, 1)
             .lt(lengths.unsqueeze(1)))
+
+
+class LIBERTDataset4Pretrain(Dataset):
+    """ Load sentence pair (sequential or random order) from corpus """
+    def __init__(self, data, indices, pipeline=[]):
+        super().__init__()
+        self.pipeline = pipeline
+
+        self.data = data  # this is a subclass of the BaseData class in data.py
+        self.IDs = indices  # list of data IDs, but also mapping between integer index and ID
+        self.feature_data = self.get_feature_subset(self.data, self.IDs)
+
+    def __getitem__(self, index):
+        instance = self.feature_data[index]
+        for proc in self.pipeline:
+            instance = proc(instance)
+        mask_seq, masked_pos, seq = instance
+        return torch.from_numpy(mask_seq).to(dtype=torch.float32), torch.from_numpy(masked_pos).long(), torch.from_numpy(seq).to(dtype=torch.float32)
+
+    def __len__(self):
+        return len(self.IDs)
+
+    @staticmethod
+    def get_feature_subset(data, indices):
+        """Returns the subset of the data that corresponds to the specified indices."""
+        return data[indices]
+
+
+class Preprocess4Mask:
+    """ Pre-processing steps for pretraining transformer """
+    def __init__(self, mask_cfg):
+        self.mask_ratio = mask_cfg["limu_mask"]["mask_ratio"]  # masking probability
+        self.mask_alpha = mask_cfg["limu_mask"]["mask_alpha"]
+        self.max_gram = mask_cfg["limu_mask"]["max_gram"]
+        self.mask_prob = mask_cfg["limu_mask"]["mask_prob"]
+        self.replace_prob = mask_cfg["limu_mask"]["replace_prob"]
+
+    def gather(self, data, position1, position2):
+        result = []
+        for i in range(position1.shape[0]):
+            result.append(data[position1[i], position2[i]])
+        return np.array(result)
+
+    def mask(self, data, position1, position2):
+        for i in range(position1.shape[0]):
+            data[position1[i], position2[i]] = np.zeros(position2[i].size)
+        return data
+
+    def replace(self, data, position1, position2):
+        for i in range(position1.shape[0]):
+            data[position1[i], position2[i]] = np.random.random(position2[i].size)
+        return data
+
+    def __call__(self, instance):
+        shape = instance.shape
+
+        # the number of prediction is sometimes less than max_pred when sequence is short
+        n_pred = max(1, int(round(shape[0] * self.mask_ratio)))
+
+        # For masked Language Models
+        # mask_pos = bert_mask(shape[0], n_pred)
+        mask_pos = span_mask(shape[0], self.max_gram, goal_num_predict=n_pred)
+
+        instance_mask = instance.copy()
+
+        if isinstance(mask_pos, tuple):
+            mask_pos_index = mask_pos[0]
+            if np.random.rand() < self.mask_prob:
+                self.mask(instance_mask, mask_pos[0], mask_pos[1])
+            elif np.random.rand() < self.replace_prob:
+                self.replace(instance_mask, mask_pos[0], mask_pos[1])
+        else:
+            mask_pos_index = mask_pos
+            if np.random.rand() < self.mask_prob:
+                instance_mask[mask_pos, :] = np.zeros((len(mask_pos), shape[1]))
+            elif np.random.rand() < self.replace_prob:
+                instance_mask[mask_pos, :] = np.random.random((len(mask_pos), shape[1]))
+        seq = instance[mask_pos_index, :]
+        return instance_mask, np.array(mask_pos_index), np.array(seq)
+
+
+def span_mask(seq_len, max_gram=3, p=0.2, goal_num_predict=15):
+    ngrams = np.arange(1, max_gram + 1, dtype=np.int64)
+    pvals = p * np.power(1 - p, np.arange(max_gram))
+    # alpha = 6
+    # pvals = np.power(alpha, ngrams) * np.exp(-alpha) / factorial(ngrams)# possion
+    pvals /= pvals.sum(keepdims=True)
+    mask_pos = set()
+    while len(mask_pos) < goal_num_predict:
+        n = np.random.choice(ngrams, p=pvals)
+        n = min(n, goal_num_predict - len(mask_pos))
+        anchor = np.random.randint(seq_len)
+        if anchor in mask_pos:
+            continue
+        for i in range(anchor, min(anchor + n, seq_len - 1)):
+            mask_pos.add(i)
+    return list(mask_pos)
