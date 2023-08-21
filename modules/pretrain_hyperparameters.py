@@ -19,15 +19,7 @@ class KDD_Pretrain_Hyperparameters:
             print(f"Optimizer either Adam or RAdam")
             sys.exit()
 
-        task = config["kdd_pretrain"]["task"]
-        if (task == "imputation") or (task == "transduction"):
-            self.loss = MaskedMSELoss(reduction='none')  # outputs loss for each batch element
-        elif task == "classification":
-            self.loss = NoFussCrossEntropyLoss(reduction='none')  # outputs loss for each batch sample
-        elif task == "regression":
-            self.loss = nn.MSELoss(reduction='none')  # outputs loss for each batch sample
-        else:
-            raise ValueError("Loss module for task '{}' does not exist".format(task))
+        self.loss = MaskedMSELoss(reduction='none')  # outputs loss for each batch element
 
         weight_decay = config["kdd_pretrain"]["weight_decay"]
         if weight_decay is None:
@@ -51,15 +43,8 @@ class LIMU_Pretrain_Hyperparameters:
             print(f"Optimizer either Adam or RAdam")
             sys.exit()
 
-        task = config["limu_pretrain"]["task"]
-        if (task == "imputation") or (task == "transduction"):
-            self.loss = MaskedMSELoss(reduction='none')  # outputs loss for each batch element
-        elif task == "classification":
-            self.loss = NoFussCrossEntropyLoss(reduction='none')  # outputs loss for each batch sample
-        elif task == "regression":
-            self.loss = nn.MSELoss(reduction='none')  # outputs loss for each batch sample
-        else:
-            raise ValueError("Loss module for task '{}' does not exist".format(task))
+        # self.loss = nn.MSELoss(reduction='none')  # outputs loss for each batch sample
+        self.loss = MaskedMSELoss(reduction='none')  # outputs loss for each batch element
 
         weight_decay = config["limu_pretrain"]["weight_decay"]
         if weight_decay is None:

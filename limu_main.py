@@ -5,6 +5,7 @@ from modules.limu_model import limu_model4pretrain
 from modules.pretrain_hyperparameters import LIMU_Pretrain_Hyperparameters
 from utils.load_data_from_file import load_mixed_data, prepare_mixed_data_loader, load_one_out_data, \
     prepare_one_out_data_loader
+from utils.pretrain import pretrain_limu_model
 
 
 def main():
@@ -14,28 +15,31 @@ def main():
     print(config)
 
     if config["general"]["test_mode"] == "Mixed":
-        data, labels = load_mixed_data(window_size=config["general"]["window_size"],
-                                       overlap=config["general"]["overlap"])
-
-        eyegaze_data_loader, encoder = (prepare_mixed_data_loader
-                               (data, labels, batch_size=config["general"]["batch_size"],
-                                max_len=config["general"]["window_size"]))
+        data, labels, encoder = load_mixed_data(window_size=config["general"]["window_size"],
+                                                overlap=config["general"]["overlap"])
 
         num_classes = len(encoder.classes_)
         feat_dim = data[0].shape[1]
-        print(f"The number of classes is {num_classes}, the feat_dim is {feat_dim}")
-    elif config["general"]["test_mode"] == "One_out":
-        train_data, train_labels, test_data, test_labels = (load_one_out_data
-                                                            (window_size=config["general"]["window_size"],
-                                                             overlap=config["general"]["overlap"]))
+        labels_dim = labels.shape
+        print(f"The number of classes is {num_classes}, the feat_dim is {feat_dim}, the labels_dim is {labels_dim}")
 
-        eyegaze_data_loader, encoder = (prepare_one_out_data_loader
-                               (train_data, train_labels, test_data, test_labels,
-                                batch_size=config["general"]["batch_size"], max_len=config["general"]["window_size"]))
+        eyegaze_data_loader = (prepare_mixed_data_loader
+                               (data, labels, batch_size=config["general"]["batch_size"],
+                                max_len=config["general"]["window_size"]))
+
+    elif config["general"]["test_mode"] == "One_out":
+        train_data, train_labels, test_data, test_labels, encoder = (load_one_out_data
+                                                                     (window_size=config["general"]["window_size"],
+                                                                      overlap=config["general"]["overlap"]))
 
         num_classes = len(encoder.classes_)
         feat_dim = train_data[0].shape[1]
         print(f"The number of classes is {num_classes}, the feat_dim is {feat_dim}")
+
+        eyegaze_data_loader = (prepare_one_out_data_loader
+                               (train_data, train_labels, test_data, test_labels,
+                                batch_size=config["general"]["batch_size"],
+                                max_len=config["general"]["window_size"]))
     else:
         print("Either Mixed / One_out")
         sys.exit()
@@ -45,7 +49,7 @@ def main():
     loss = hyperparameters.loss
     optimizer = hyperparameters.optimizer(model.parameters(), hyperparameters.lr, weight_decay=hyperparameters.weight_decay)
 
-    # pretrain_kdd_model(model, loss, optimizer, eyegaze_data_loader[0], config)
+    pretrain_limu_model(model, loss, optimizer, eyegaze_data_loader[0], config)
 
 
 if __name__ == "__main__":

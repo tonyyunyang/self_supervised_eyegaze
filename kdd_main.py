@@ -47,8 +47,7 @@ def main():
     hyperparameters = KDD_Pretrain_Hyperparameters(config)
     model = kdd_model4pretrain(config, feat_dim)
     loss = hyperparameters.loss
-    optimizer = hyperparameters.optimizer(model.parameters(), hyperparameters.lr,
-                                          weight_decay=hyperparameters.weight_decay)
+    optimizer = hyperparameters.optimizer(model.parameters(), hyperparameters.lr, weight_decay=hyperparameters.weight_decay)
 
     pretrain_kdd_model(model, loss, optimizer, eyegaze_data_loader[0], config)
 

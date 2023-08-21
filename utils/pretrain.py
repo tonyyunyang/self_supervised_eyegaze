@@ -49,7 +49,7 @@ def pretrain_kdd_model(model, loss, optimizer, pretrain_data, config):
 
     train_loss_list = []
 
-    for epoch in tqdm(range(1, config["kdd_pretrain"]["epoch"] + 1)):
+    for epoch in range(1, config["kdd_pretrain"]["epoch"] + 1):
         epoch_start_time = time.time()
 
         train_loss = pretrain_kdd_epoch(model, loss, optimizer, pretrain_data, config, device, l2_reg=False)
@@ -57,7 +57,7 @@ def pretrain_kdd_model(model, loss, optimizer, pretrain_data, config):
 
         epoch_runtime = time.time() - epoch_start_time
 
-        print(f"Epoch {epoch + 1}, Train Loss: {train_loss:.4f}, Time: {epoch_runtime}")
+        print(f"Epoch {epoch}/{config['kdd_pretrain']['epoch']}, Train Loss: {train_loss:.4f}, Time: {epoch_runtime}")
 
         # Difficulty scheduling
         if config["kdd_pretrain"]['harden'] and check_progress(epoch):
@@ -87,7 +87,8 @@ def pretrain_kdd_epoch(model, loss, optimizer, pretrain_data, config, device, l2
         # Cascade noise masks (batch_size, padded_length, feat_dim) and padding masks (batch_size, padded_length)
         target_masks = target_masks * padding_masks.unsqueeze(-1)
 
-        compute_loss = loss(predictions, targets, target_masks)  # (num_active,) individual loss (square error per element) for each active value in batch
+        compute_loss = loss(predictions, targets,
+                            target_masks)  # (num_active,) individual loss (square error per element) for each active value in batch
         batch_loss = torch.sum(compute_loss)
         mean_loss = batch_loss / len(compute_loss)  # mean loss (over active elements) used for optimization
 
@@ -118,6 +119,8 @@ def check_progress(epoch):
         return True
     else:
         return False
+
+
 # if epoch in [100, 140, 160, 220, 280, 340]: #[100, 140, 160, 220, 280, 340]
 #     return True
 # else:
@@ -147,3 +150,104 @@ def kdd_pretrain_save_metrics(train_loss_list, config):
 def generate_numbers(start, end, total_steps):
     step_size = (end - start) / (total_steps - 1)
     return [round(start + step_size * i) for i in range(1, total_steps + 1)]
+
+
+def pretrain_limu_model(model, loss, optimizer, pretrain_data, config):
+    # Check if CUDA is available
+    # if not torch.cuda.is_available():
+    #     print("CUDA is not available. Please activate CUDA for GPU acceleration.")
+    #     print("This is a computationally expensive training process and requires GPU acceleration.")
+    #     sys.exit()
+    # print("CUDA ACTIVATED")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"=============================================================\n"
+          f"=====================Training via {device}===================\n"
+          f"=============================================================")
+
+    path = os.path.join("results", f"limu_model")
+    os.makedirs(path, exist_ok=True)
+
+    path = os.path.join(path, f"{config['general']['test_mode']}")
+    os.makedirs(path, exist_ok=True)
+
+    path = os.path.join(path, f"pretrain")
+    os.makedirs(path, exist_ok=True)
+
+    path = os.path.join(path, f"epoch_{config['limu_pretrain']['epoch']}_"
+                              f"lr_{format(config['limu_pretrain']['lr'], '.10f').rstrip('0').rstrip('.')}_"
+                              f"d_hidden_{config['limu_model']['d_hidden']}_d_ff_{config['limu_model']['d_ff']}_"
+                              f"n_heads_{config['limu_model']['n_heads']}_n_layer_{config['limu_model']['n_layers']}_"
+                              f"embNorm_{config['limu_model']['emb_norm']}")
+    os.makedirs(path, exist_ok=True)
+
+    config["general"]["pretrain_model"] = path
+
+    model = model.to(device)
+
+    train_loss_list = []
+
+    for epoch in range(1, config["limu_pretrain"]["epoch"] + 1):
+        epoch_start_time = time.time()
+
+        train_loss = pretrain_limu_epoch(model, loss, optimizer, pretrain_data, config, device, l2_reg=False)
+        train_loss_list.append(train_loss)
+
+        epoch_runtime = time.time() - epoch_start_time
+
+        print(f"Epoch {epoch}/{config['limu_pretrain']['epoch']}, Train Loss: {train_loss:.4f}, Time: {epoch_runtime}")
+
+        # Difficulty scheduling
+        if config["limu_pretrain"]['harden'] and check_progress(epoch):
+            print("==========================Updating difficulty=========================")
+            pretrain_data.dataset.update()
+
+    # Save the model for continuing the training
+    torch.save(
+        model.state_dict(), os.path.join(config["general"]["pretrain_model"], "continue_model.pth")
+    )
+
+    limu_pretrain_save_metrics(train_loss_list, config)
+
+
+def pretrain_limu_epoch(model, loss, optimizer, pretrain_data, config, device, l2_reg=False):
+    model = model.train()
+    active_elements = 0
+    loss_sum = 0
+    for i, batch in enumerate(pretrain_data):
+        X, targets, target_masks, padding_masks, IDs = batch
+        targets = targets.to(device)
+        target_masks = target_masks.to(device)  # 1s: mask and predict, 0s: unaffected input (ignore)
+        padding_masks = padding_masks.to(device)  # 0s: ignore
+
+        optimizer.zero_grad()
+        seq_recon = model(X.to(device))
+        # epoch_loss = loss(seq_recon, targets)
+        epoch_loss = loss(seq_recon, targets, target_masks)
+        epoch_loss = epoch_loss.mean()
+        epoch_loss.backward()
+        optimizer.step()
+
+        loss_sum += epoch_loss.item()
+
+    training_loss = loss_sum / len(pretrain_data)
+    return training_loss
+
+
+def limu_pretrain_save_metrics(train_loss_list, config):
+    # After the training loop, plot the loss list
+    numbers = generate_numbers(0, 700, 5)
+
+    plt.figure(figsize=(10, 5))
+    plt.plot(train_loss_list, label="Training Loss")
+
+    # Highlight the points
+    if config["limu_pretrain"]["harden"]:
+        for num in numbers:
+            if num < len(train_loss_list):  # Check if the number is within the range of the list
+                plt.scatter(num, train_loss_list[num], color='red')  # Highlight the point on the training loss plot
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.legend()
+    plt.savefig(
+        os.path.join(config["general"]["pretrain_model"], "loss_plot.png")
+    )  # Save the figure before showing it
