@@ -45,10 +45,10 @@
   },
 
   "limu_model": {
-    "d_hidden": 128,
-    "d_ff": 256,
-    "n_heads": 16,
-    "n_layers": 3,
+    "d_hidden": 72,
+    "d_ff": 144,
+    "n_heads": 4,
+    "n_layers": 4,
     "emb_norm": false
   }
 
