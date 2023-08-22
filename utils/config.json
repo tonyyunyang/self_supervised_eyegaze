@@ -9,7 +9,7 @@
   },
 
   "kdd_pretrain": {
-    "epoch": 2,
+    "epoch": 3200,
     "lr": 0.0001,
     "optimizer": "RAdam",
     "weight_decay": null,
@@ -17,7 +17,7 @@
   },
 
   "limu_pretrain": {
-    "epoch": 2,
+    "epoch": 3200,
     "lr": 0.0001,
     "optimizer": "Adam",
     "weight_decay": null,

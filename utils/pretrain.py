@@ -237,6 +237,9 @@ def pretrain_limu_epoch(model, loss_fn, optimizer, pretrain_data, config, device
                        origin_seq.cpu().detach().numpy().reshape(-1, origin_seq.shape[-1]))
             np.savetxt(f"{config['general']['pretrain_model']}/mask_pos.txt",
                        masked_pos.cpu().detach().numpy().reshape(-1, masked_pos.shape[-1]))
+            np.savetxt(f"{config['general']['pretrain_model']}/mask_seq.txt",
+                       mask_seqs.cpu().detach().numpy().reshape(-1, mask_seqs.shape[-1]))
+            
 
     training_loss = loss_sum / len(pretrain_data)
     return training_loss
