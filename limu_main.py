@@ -51,6 +51,9 @@ def main():
 
     pretrain_limu_model(model, loss, optimizer, eyegaze_data_loader[0], config)
 
+    # for i in eyegaze_data_loader[0]:
+    #     print(i)
+
 
 if __name__ == "__main__":
     main()

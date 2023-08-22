@@ -10,6 +10,8 @@ from modules.loss import l2_reg_loss
 
 from matplotlib import pyplot as plt
 
+import numpy as np
+
 
 def pretrain_kdd_model(model, loss, optimizer, pretrain_data, config):
     # Check if CUDA is available
@@ -52,7 +54,7 @@ def pretrain_kdd_model(model, loss, optimizer, pretrain_data, config):
     for epoch in range(1, config["kdd_pretrain"]["epoch"] + 1):
         epoch_start_time = time.time()
 
-        train_loss = pretrain_kdd_epoch(model, loss, optimizer, pretrain_data, config, device, l2_reg=False)
+        train_loss = pretrain_kdd_epoch(model, loss, optimizer, pretrain_data, config, device, epoch, l2_reg=False)
         train_loss_list.append(train_loss)
 
         epoch_runtime = time.time() - epoch_start_time
@@ -72,7 +74,7 @@ def pretrain_kdd_model(model, loss, optimizer, pretrain_data, config):
     kdd_pretrain_save_metrics(train_loss_list, config)
 
 
-def pretrain_kdd_epoch(model, loss, optimizer, pretrain_data, config, device, l2_reg=False):
+def pretrain_kdd_epoch(model, loss, optimizer, pretrain_data, config, device, epoch, l2_reg=False):
     model = model.train()
     train_loss = 0
     active_elements = 0
@@ -108,6 +110,11 @@ def pretrain_kdd_epoch(model, loss, optimizer, pretrain_data, config, device, l2
         with torch.no_grad():
             active_elements += len(compute_loss)
             train_loss += batch_loss.item()  # add total loss of batch
+
+        if epoch == config["kdd_pretrain"]["epoch"]:
+            np.savetxt(f"{config['general']['pretrain_model']}/pred.txt", predictions.cpu().detach().numpy().reshape(-1))
+            np.savetxt(f"{config['general']['pretrain_model']}/true.txt", targets.cpu().detach().numpy().reshape(-1))
+            np.savetxt(f"{config['general']['pretrain_model']}/mask.txt", target_masks.cpu().detach().numpy().astype(int).reshape(-1))
 
     train_loss = train_loss / active_elements  # average loss per element for whole epoch
     return train_loss
@@ -189,7 +196,7 @@ def pretrain_limu_model(model, loss, optimizer, pretrain_data, config):
     for epoch in range(1, config["limu_pretrain"]["epoch"] + 1):
         epoch_start_time = time.time()
 
-        train_loss = pretrain_limu_epoch(model, loss, optimizer, pretrain_data, config, device, l2_reg=False)
+        train_loss = pretrain_limu_epoch(model, loss, optimizer, pretrain_data, config, device, epoch, l2_reg=False)
         train_loss_list.append(train_loss)
 
         epoch_runtime = time.time() - epoch_start_time
@@ -204,11 +211,11 @@ def pretrain_limu_model(model, loss, optimizer, pretrain_data, config):
     limu_pretrain_save_metrics(train_loss_list, config)
 
 
-def pretrain_limu_epoch(model, loss_fn, optimizer, pretrain_data, config, device, l2_reg=False):
+def pretrain_limu_epoch(model, loss_fn, optimizer, pretrain_data, config, device, epoch, l2_reg=False):
     loss_sum = 0.0
     model = model.train()
     for i, batch in enumerate(pretrain_data):
-        mask_seqs, masked_pos, seqs = batch
+        mask_seqs, masked_pos, seqs, origin_seq = batch
         seqs = seqs.to(device)
 
         optimizer.zero_grad()
@@ -219,6 +226,17 @@ def pretrain_limu_epoch(model, loss_fn, optimizer, pretrain_data, config, device
         loss.backward()
         optimizer.step()
         loss_sum += loss.item()
+
+        if epoch == config["limu_pretrain"]["epoch"]:
+            # Reshape the tensors to 2D and save
+            np.savetxt(f"{config['general']['pretrain_model']}/pred.txt",
+                       seq_recon.cpu().detach().numpy().reshape(-1, seq_recon.shape[-1]))
+            np.savetxt(f"{config['general']['pretrain_model']}/true.txt",
+                       seqs.cpu().detach().numpy().reshape(-1, seqs.shape[-1]))
+            np.savetxt(f"{config['general']['pretrain_model']}/origin_seq.txt",
+                       origin_seq.cpu().detach().numpy().reshape(-1, origin_seq.shape[-1]))
+            np.savetxt(f"{config['general']['pretrain_model']}/mask_pos.txt",
+                       masked_pos.cpu().detach().numpy().reshape(-1, masked_pos.shape[-1]))
 
     training_loss = loss_sum / len(pretrain_data)
     return training_loss

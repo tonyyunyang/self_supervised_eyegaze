@@ -340,10 +340,11 @@ class LIBERTDataset4Pretrain(Dataset):
 
     def __getitem__(self, index):
         instance = self.feature_data[index]
+        origin = instance
         for proc in self.pipeline:
             instance = proc(instance)
         mask_seq, masked_pos, seq = instance
-        return torch.from_numpy(mask_seq).to(dtype=torch.float32), torch.from_numpy(masked_pos).long(), torch.from_numpy(seq).to(dtype=torch.float32)
+        return torch.from_numpy(mask_seq).to(dtype=torch.float32), torch.from_numpy(masked_pos).long(), torch.from_numpy(seq).to(dtype=torch.float32), torch.from_numpy(origin).to(dtype=torch.float32)
 
     def __len__(self):
         return len(self.IDs)
@@ -404,6 +405,7 @@ class Preprocess4Mask:
             elif np.random.rand() < self.replace_prob:
                 instance_mask[mask_pos, :] = np.random.random((len(mask_pos), shape[1]))
         seq = instance[mask_pos_index, :]
+
         return instance_mask, np.array(mask_pos_index), np.array(seq)
 
 
