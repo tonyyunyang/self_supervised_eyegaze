@@ -1,4 +1,6 @@
+import os
 import sys
+from copy import deepcopy
 from typing import Optional, Any
 import math
 
@@ -33,6 +35,44 @@ def kdd_model4pretrain(config, feat_dim):
         embedding=config["kdd_model"]["projection"],
         freeze=config["general"]["freeze"],
     )
+
+    print("Model:\n{}".format(model))
+    print("Total number of parameters: {}".format(count_parameters(model)))
+    print("Trainable parameters: {}".format(count_parameters(model, trainable=True)))
+
+    return model
+
+
+def kdd_model4finetune(config, feat_dim, num_classes):
+    max_seq_len = config["general"]["window_size"]
+
+    model = TSTransformerEncoderClassiregressor(
+        feat_dim,
+        max_seq_len,
+        config["kdd_model"]["d_hidden"],
+        config["kdd_model"]["n_heads"],
+        config["kdd_model"]["n_layers"],
+        config["kdd_model"]["d_ff"],
+        num_classes,
+        dropout=config["kdd_model"]["dropout"],
+        pos_encoding=config["kdd_model"]["pos_encoding"],
+        activation=config["kdd_model"]["activation"],
+        norm=config["kdd_model"]["norm"],
+        embedding=config["kdd_model"]["projection"],
+        freeze=config["general"]["freeze"],
+    )
+
+    model_path = os.path.join(config["general"]["pretrain_model"], "continue_model.pth")
+
+    state_dict = torch.load(model_path)
+
+    for key in list(state_dict.keys()):  # need to convert keys to list to avoid RuntimeError due to changing size during iteration
+        if key.startswith('output_layer'):
+            state_dict.pop(key)
+            print(f"Popped layer {key}")
+    model.load_state_dict(state_dict, strict=False)
+
+    print('Loaded model from {}'.format(model_path))
 
     print("Model:\n{}".format(model))
     print("Total number of parameters: {}".format(count_parameters(model)))
@@ -289,14 +329,32 @@ class TSTransformerEncoderClassiregressor(nn.Module):
     """
 
     def __init__(self, feat_dim, max_len, d_model, n_heads, num_layers, dim_feedforward, num_classes,
-                 dropout=0.1, pos_encoding='fixed', activation='gelu', norm='BatchNorm', freeze=False):
+                 dropout=0.1, pos_encoding='fixed', activation='gelu', norm='BatchNorm', embedding='convolution', freeze=False):
         super(TSTransformerEncoderClassiregressor, self).__init__()
 
         self.max_len = max_len
         self.d_model = d_model
         self.n_heads = n_heads
+        self.embedding = embedding
 
-        self.project_inp = nn.Linear(feat_dim, d_model)
+        # Below are configurations for the convolution layer
+        kernel_size = 10
+        stride = 2
+        dilation = 1
+        padding = 0
+
+        if self.embedding == "linear":
+            self.project_inp = nn.Linear(feat_dim, d_model)
+        elif self.embedding == "convolution":
+            # Calculate the output sequence size after the 1D Conv layer
+            conv_seq_length = int(floor((self.max_len + 2 * padding - dilation * (kernel_size - 1)) / stride + 1))
+
+            self.project_inp = nn.Conv1d(feat_dim, d_model, kernel_size, stride, padding, dilation)
+            self.max_len = conv_seq_length
+        else:
+            print(f"Either linear / convolution")
+            sys.exit()
+
         self.pos_enc = get_pos_encoder(pos_encoding)(d_model, dropout=dropout * (1.0 - freeze), max_len=max_len)
 
         if norm == 'LayerNorm':
@@ -314,7 +372,7 @@ class TSTransformerEncoderClassiregressor(nn.Module):
 
         self.feat_dim = feat_dim
         self.num_classes = num_classes
-        self.output_layer = self.build_output_module(d_model, max_len, num_classes)
+        self.output_layer = self.build_output_module(d_model, self.max_len, num_classes)
 
     def build_output_module(self, d_model, max_len, num_classes):
         output_layer = nn.Linear(d_model * max_len, num_classes)
@@ -322,7 +380,7 @@ class TSTransformerEncoderClassiregressor(nn.Module):
         # add F.log_softmax and use NLLoss
         return output_layer
 
-    def forward(self, X, padding_masks):
+    def forward(self, X):
         """
         Args:
             X: (batch_size, seq_length, feat_dim) torch tensor of masked features (input)
@@ -331,19 +389,29 @@ class TSTransformerEncoderClassiregressor(nn.Module):
             output: (batch_size, num_classes)
         """
 
-        # permute because pytorch convention for transformers is [seq_length, batch_size, feat_dim]. padding_masks [batch_size, feat_dim]
-        inp = X.permute(1, 0, 2)
-        inp = self.project_inp(inp) * math.sqrt(
-            self.d_model)  # [seq_length, batch_size, d_model] project input vectors to d_model dimensional space
+        if self.embedding == "linear":
+            # permute because pytorch convention for transformers is [seq_length, batch_size, feat_dim]. padding_masks [batch_size, feat_dim]
+            inp = X.permute(1, 0, 2)
+            inp = self.project_inp(inp) * math.sqrt(
+                self.d_model)  # [seq_length, batch_size, d_model] project input vectors to d_model dimensional space
+        elif self.embedding == "convolution":
+            inp = X.permute(0, 2, 1)  # permute to (batch_size, feat_dim, seq_length)
+            inp = self.project_inp(inp)
+            inp = X.permute(1, 0, 2)  # permute back to (seq_length, batch_size, d_model)
+        else:
+            print(f"Either linear / convolution")
+            sys.exit()
+
         inp = self.pos_enc(inp)  # add positional encoding
         # NOTE: logic for padding masks is reversed to comply with definition in MultiHeadAttention, TransformerEncoderLayer
-        output = self.transformer_encoder(inp, src_key_padding_mask=~padding_masks)  # (seq_length, batch_size, d_model)
+        # output = self.transformer_encoder(inp, src_key_padding_mask=~padding_masks)  # (seq_length, batch_size, d_model)
+        output = self.transformer_encoder(inp)  # (seq_length, batch_size, d_model)
         output = self.act(output)  # the output transformer encoder/decoder embeddings don't include non-linearity
         output = output.permute(1, 0, 2)  # (batch_size, seq_length, d_model)
         output = self.dropout1(output)
 
         # Output
-        output = output * padding_masks.unsqueeze(-1)  # zero-out padding embeddings
+        # output = output * padding_masks.unsqueeze(-1)  # zero-out padding embeddings
         output = output.reshape(output.shape[0], -1)  # (batch_size, seq_length * d_model)
         output = self.output_layer(output)  # (batch_size, num_classes)
 
