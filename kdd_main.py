@@ -4,6 +4,7 @@ import sys
 from modules.finetune_hyperparameters import KDD_Finetune_Hyperparameters
 from modules.kdd_model import kdd_model4pretrain, kdd_model4finetune
 from modules.pretrain_hyperparameters import KDD_Pretrain_Hyperparameters
+from utils.finetune import finetune_kdd_model
 from utils.load_data_from_file import load_mixed_data, prepare_mixed_data_loader, load_one_out_data, \
     prepare_one_out_data_loader
 from utils.pretrain import pretrain_kdd_model
@@ -66,7 +67,7 @@ def main():
                                           weight_decay=hyperparameters.weight_decay)
 
     # eyegaze_data_loader[1] is the training set, and eyegaze_data_loader[2] is the validation set
-    # finetune_kdd_model(model, loss, optimizer, eyegaze_data_loader[1], eyegaze_data_loader[2], config)
+    finetune_kdd_model(model, loss, optimizer, eyegaze_data_loader[1], eyegaze_data_loader[2], config)
 
 
 if __name__ == "__main__":
