@@ -2,7 +2,9 @@ import os
 import time
 
 import torch
-
+from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
+import seaborn as sns
+from matplotlib import pyplot as plt
 from modules.loss import l2_reg_loss
 
 
@@ -38,7 +40,7 @@ def finetune_kdd_model(model, loss, optimizer, train_set, val_set, config):
                               f"activation_{config['kdd_model']['activation']}_norm_{config['kdd_model']['norm']}")
     os.makedirs(path, exist_ok=True)
 
-    config["general"]["pretrain_model"] = path
+    config["general"]["finetune_model"] = path
 
     model = model.to(device)
 
@@ -46,6 +48,8 @@ def finetune_kdd_model(model, loss, optimizer, train_set, val_set, config):
     val_loss_list = []
     val_accuracy_list = []
     val_f1_score_list = []
+
+    best_val_acc = 0  # Initialize variable to keep track of best validation accuracy
 
     for epoch in range(1, config["kdd_finetune"]["epoch"] + 1):
         epoch_start_time = time.time()
@@ -58,15 +62,21 @@ def finetune_kdd_model(model, loss, optimizer, train_set, val_set, config):
 
         epoch_runtime = time.time() - epoch_start_time
 
-        print(f"Epoch {epoch}/{config['kdd_finetune']['epoch']}, Train Loss: {train_loss:.4f}, Time: {epoch_runtime}")
+        print(f"Epoch {epoch}/{config['kdd_finetune']['epoch']}, Train Loss: {train_loss:.4f}, Accuracy: {val_acc:.4f}, F1 Score: {val_f1:.4f}, Time: {epoch_runtime}")
 
+        # Save the best model based on validation accuracy
+        if val_acc > best_val_acc:
+            best_val_acc = val_acc
+            torch.save(
+                model.state_dict(), os.path.join(config["general"]["finetune_model"], "best_model.pth")
+            )
 
     # Save the model for continuing the training
     torch.save(
-        model.state_dict(), os.path.join(config["general"]["pretrain_model"], "continue_model.pth")
+        model.state_dict(), os.path.join(config["general"]["finetune_model"], "continue_model.pth")
     )
 
-    # kdd_finetune_save_metrics(train_loss_list, val_loss_list, val_accuracy_list, val_f1_score_list, config)
+    kdd_finetune_save_metrics(train_loss_list, val_loss_list, val_accuracy_list, val_f1_score_list, config)
 
 
 def finetune_kdd_epoch(model, loss, optimizer, train_set, val_set, config, device, epoch, l2_reg=False):
@@ -109,6 +119,10 @@ def finetune_kdd_epoch(model, loss, optimizer, train_set, val_set, config, devic
     val_loss = 0
     total_val_samples = 0
 
+    # Initialize lists to store true and predicted labels
+    true_labels = []
+    pred_labels = []
+
     for i, batch in enumerate(val_set):
         X, targets, padding_masks, IDs = batch
         targets = targets.to(device)
@@ -119,7 +133,75 @@ def finetune_kdd_epoch(model, loss, optimizer, train_set, val_set, config, devic
         batch_loss = torch.sum(compute_loss).cpu().item()
         mean_loss = batch_loss / len(compute_loss)
 
+        # Collect true and predicted labels
+        true_labels.extend(targets.cpu().numpy())
+        pred_labels.extend(torch.argmax(predictions, dim=1).cpu().numpy())
+
         total_val_samples += len(compute_loss)
         val_loss += batch_loss
 
+
     val_loss = val_loss / total_val_samples
+
+    # Compute validation accuracy and F1 score
+    val_acc = accuracy_score(true_labels, pred_labels)
+    val_f1 = f1_score(true_labels, pred_labels, average='weighted')  # Use 'weighted' if you have imbalanced classes
+
+    return train_loss, val_loss, val_acc, val_f1
+
+
+def kdd_finetune_save_metrics(train_loss_list, val_loss_list, val_accuracy_list, val_f1_score_list, config):
+    # Plot and save the metrics
+    epochs = range(1, config["kdd_finetune"]["epoch"] + 1)
+    plt.figure(figsize=(12, 8))
+
+    plt.plot(epochs, train_loss_list, label='Train Loss', linestyle='--')
+    plt.plot(epochs, val_loss_list, label='Validation Loss', linestyle='--')
+    plt.plot(epochs, val_accuracy_list, label='Validation Accuracy', linestyle='-')
+    plt.plot(epochs, val_f1_score_list, label='Validation F1 Score', linestyle='-')
+
+    plt.title('Training and Validation Metrics')
+    plt.xlabel('Epochs')
+    plt.ylabel('Metrics')
+    plt.legend()
+
+    plt.tight_layout()
+    plt.savefig(os.path.join(config["general"]["finetune_model"], "all_metrics_plot.png"))
+
+
+def eval_finetune_kdd_model(model, test_set, config, encoder):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    # Load the best model
+    model.load_state_dict(torch.load(os.path.join(config["general"]["finetune_model"], "best_model.pth")))
+    model = model.to(device)
+    model.eval()
+
+    # Evaluate the model on the test set
+    true_labels = []
+    pred_labels = []
+
+    for i, batch in enumerate(test_set):
+        X, targets, padding_masks, IDs = batch
+        targets = targets.to(device)
+        predictions = model(X.to(device))
+
+        true_labels.extend(targets.cpu().numpy())
+        pred_labels.extend(torch.argmax(predictions, dim=1).cpu().numpy())
+
+    # Decode the labels
+    true_labels_decoded = encoder.inverse_transform(true_labels)
+    pred_labels_decoded = encoder.inverse_transform(pred_labels)
+
+    # Compute the confusion matrix
+    cm = confusion_matrix(true_labels_decoded, pred_labels_decoded)
+
+    # Plot the confusion matrix
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=encoder.classes_, yticklabels=encoder.classes_)
+    plt.title('Confusion Matrix')
+    plt.xlabel('Predicted Labels')
+    plt.ylabel('True Labels')
+
+    # Save the confusion matrix plot
+    plt.savefig(os.path.join(config["general"]["finetune_model"], "confusion_matrix.png"))

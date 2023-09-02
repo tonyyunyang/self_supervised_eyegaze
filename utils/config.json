@@ -4,6 +4,7 @@
     "window_size": 150,
     "overlap": 0.8,
     "pretrain_model": "results/kdd_model/One_out/linear/pretrain/freeze_False_epoch_9600_lr_0.0001_d_hidden_128_d_ff_256_n_heads_16_n_layer_3_pos_encode_learnable_activation_gelu_norm_BatchNorm",
+    "finetune_model": null,
     "batch_size": 128,
     "freeze": false
   },

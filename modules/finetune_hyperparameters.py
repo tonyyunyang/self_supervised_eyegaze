@@ -21,7 +21,7 @@ class KDD_Finetune_Hyperparameters:
             print(f"Optimizer either Adam or RAdam")
             sys.exit()
 
-        self.loss = NoFussCrossEntropyLoss  # outputs loss for each batch element
+        self.loss = NoFussCrossEntropyLoss(reduction='none')  # outputs loss for each batch element
 
         weight_decay = config["kdd_finetune"]["weight_decay"]
         if weight_decay is None:
