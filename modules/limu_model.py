@@ -22,6 +22,16 @@ def limu_model4pretrain(config, feat_dim):
     return model
 
 
+def limu_model4finetune(config, feat_dim, classifier, frozen_bert):
+    model = LIMUBertModel4Finetune(config, feat_dim, classifier=classifier, frozen_bert=frozen_bert)
+
+    print("Model:\n{}".format(model))
+    print("Total number of parameters: {}".format(count_parameters(model)))
+    print("Trainable parameters: {}".format(count_parameters(model, trainable=True)))
+
+    return model
+
+
 def gelu(x):
     "Implementation of the gelu activation function by Hugging Face"
     return x * 0.5 * (1.0 + torch.erf(x / math.sqrt(2.0)))
@@ -237,3 +247,26 @@ class LIMUBertModel4Pretrain(nn.Module):
         h_masked = self.norm(h_masked)
         logits_lm = self.decoder(h_masked)
         return logits_lm
+
+
+class LIMUBertModel4Finetune(nn.Module):
+    def __init__(self, cfg, feat_dim, classifier=None, frozen_bert=False):
+        super().__init__()
+        self.transformer = Transformer_Original(cfg, feat_dim)  # encoder
+        if frozen_bert:
+            for p in self.transformer.parameters():
+                p.requires_grad = False
+        self.classifier = classifier
+
+    def forward(self, input_seqs, training=False):  # training
+        h = self.transformer(input_seqs)
+        h = self.classifier(h, training)
+        return h
+
+    def load_self(self, model_file, map_location=None):
+        state_dict = self.state_dict()
+        model_dicts = torch.load(model_file, map_location=map_location).items()
+        for k, v in model_dicts:
+            if k in state_dict:
+                state_dict.update({k: v})
+        self.load_state_dict(state_dict)

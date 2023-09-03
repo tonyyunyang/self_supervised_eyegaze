@@ -47,9 +47,9 @@ def main():
         print("Either Mixed / One_out")
         sys.exit()
 
+    # ==================================================================================================================
     # If the pretrain_model path is not provided, start with pretraining the model
     if config["general"]["pretrain_model"] is None:
-
         hyperparameters = KDD_Pretrain_Hyperparameters(config)
         model = kdd_model4pretrain(config, feat_dim)
         loss = hyperparameters.loss
@@ -59,7 +59,7 @@ def main():
         pretrain_kdd_model(model, loss, optimizer, eyegaze_data_loader[0], config)
 
     # If the pretrain_model path is provided, meaning that there is already a pretrained model, then directly finetune
-    # After pretrain, finetune will be performed automatically, because the model_path will be filled
+    # After pretrain, finetune will be performed automatically, because the pretrain_model will be filled
     hyperparameters = KDD_Finetune_Hyperparameters(config)
     model = kdd_model4finetune(config, feat_dim, num_classes)
     loss = hyperparameters.loss

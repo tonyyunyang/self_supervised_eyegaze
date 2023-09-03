@@ -1,7 +1,8 @@
 import json
 import sys
 
-from modules.limu_model import limu_model4pretrain
+from modules.finetune_hyperparameters import LIMU_Finetune_Hyperparameters
+from modules.limu_model import limu_model4pretrain, limu_model4finetune
 from modules.pretrain_hyperparameters import LIMU_Pretrain_Hyperparameters
 from utils.load_data_from_file import load_mixed_data, prepare_mixed_data_loader, load_one_out_data, \
     prepare_one_out_data_loader, limu_prepare_mixed_data_loader, limu_prepare_one_out_data_loader
@@ -14,6 +15,7 @@ def main():
         config = json.load(file)
     print(config)
 
+    # First load the data into dataloader according to chosen test_mode: Mixed or One_out
     if config["general"]["test_mode"] == "Mixed":
         data, labels, encoder = load_mixed_data(window_size=config["general"]["window_size"],
                                                 overlap=config["general"]["overlap"])
@@ -44,12 +46,23 @@ def main():
         print("Either Mixed / One_out")
         sys.exit()
 
-    hyperparameters = LIMU_Pretrain_Hyperparameters(config)
-    model = limu_model4pretrain(config, feat_dim)
-    loss = hyperparameters.loss
-    optimizer = hyperparameters.optimizer(model.parameters(), hyperparameters.lr, weight_decay=hyperparameters.weight_decay)
+    # ==================================================================================================================
+    # If the pretrain_model path is not provided, start with pretraining the model
+    if config["general"]["pretrain_model"] is None:
+        hyperparameters = LIMU_Pretrain_Hyperparameters(config)
+        model = limu_model4pretrain(config, feat_dim)
+        loss = hyperparameters.loss
+        optimizer = hyperparameters.optimizer(model.parameters(), hyperparameters.lr, weight_decay=hyperparameters.weight_decay)
 
-    pretrain_limu_model(model, loss, optimizer, eyegaze_data_loader[0], config)
+        pretrain_limu_model(model, loss, optimizer, eyegaze_data_loader[0], config)
+
+    # If the pretrain_model path is provided, meaning that there is already a pretrained model, then directly finetune
+    # After pretrain, finetune will be performed automatically, because the pretrain_model will be filled
+    hyperparameters = LIMU_Finetune_Hyperparameters(config)
+    classifier = fetch_classifier(method, model_classifier_cfg, input=model_bert_cfg.hidden, output=label_num)
+    model = limu_model4finetune(config, feat_dim, classifier=classifier, frozen_bert=False)
+
+
 
 
 if __name__ == "__main__":
