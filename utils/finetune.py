@@ -54,7 +54,8 @@ def finetune_kdd_model(model, loss, optimizer, train_set, val_set, config):
     for epoch in range(1, config["kdd_finetune"]["epoch"] + 1):
         epoch_start_time = time.time()
 
-        train_loss, val_loss, val_acc, val_f1 = finetune_kdd_epoch(model, loss, optimizer, train_set, val_set, config, device, epoch, l2_reg=False)
+        train_loss, val_loss, val_acc, val_f1 = finetune_kdd_epoch(model, loss, optimizer, train_set, val_set, config,
+                                                                   device, epoch, l2_reg=False)
         train_loss_list.append(train_loss)
         val_loss_list.append(val_loss)
         val_accuracy_list.append(val_acc)
@@ -62,7 +63,8 @@ def finetune_kdd_model(model, loss, optimizer, train_set, val_set, config):
 
         epoch_runtime = time.time() - epoch_start_time
 
-        print(f"Epoch {epoch}/{config['kdd_finetune']['epoch']}, Train Loss: {train_loss:.4f}, Accuracy: {val_acc:.4f}, F1 Score: {val_f1:.4f}, Time: {epoch_runtime}")
+        print(
+            f"Epoch {epoch}/{config['kdd_finetune']['epoch']}, Train Loss: {train_loss:.4f}, Accuracy: {val_acc:.4f}, F1 Score: {val_f1:.4f}, Time: {epoch_runtime}")
 
         # Save the best model based on validation accuracy
         if val_acc > best_val_acc:
@@ -139,7 +141,6 @@ def finetune_kdd_epoch(model, loss, optimizer, train_set, val_set, config, devic
 
         total_val_samples += len(compute_loss)
         val_loss += batch_loss
-
 
     val_loss = val_loss / total_val_samples
 

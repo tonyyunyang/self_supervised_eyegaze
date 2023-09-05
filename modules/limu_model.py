@@ -1,3 +1,5 @@
+import sys
+
 import torch.nn as nn
 import torch
 import math
@@ -19,6 +21,16 @@ def limu_model4pretrain(config, feat_dim):
     print("Total number of parameters: {}".format(count_parameters(model)))
     print("Trainable parameters: {}".format(count_parameters(model, trainable=True)))
 
+    return model
+
+
+def limu_fetch_classifier(method, config, input_dim, output_dim):
+    if method == "gru":
+        model = ClassifierGRU(config, input=input_dim, output=output_dim)
+    else:
+        model = None
+        print(f"Please Choose a valid classifier for the model, {method} is not a valid classifier")
+        sys.exit()
     return model
 
 
@@ -270,3 +282,42 @@ class LIMUBertModel4Finetune(nn.Module):
             if k in state_dict:
                 state_dict.update({k: v})
         self.load_state_dict(state_dict)
+
+
+class ClassifierGRU(nn.Module):
+    def __init__(self, cfg, input=None, output=None, feats=False):
+        super().__init__()
+        for i in range(cfg.num_rnn):
+            if input is not None and i == 0:
+                self.__setattr__('gru' + str(i),
+                                 nn.GRU(input, cfg.rnn_io[i][1], num_layers=cfg.num_layers[i], batch_first=True))
+            else:
+                self.__setattr__('gru' + str(i),
+                                 nn.GRU(cfg.rnn_io[i][0], cfg.rnn_io[i][1], num_layers=cfg.num_layers[i],
+                                        batch_first=True))
+        for i in range(cfg.num_linear):
+            if output is not None and i == cfg.num_linear - 1:
+                self.__setattr__('lin' + str(i), nn.Linear(cfg.linear_io[i][0], output))
+            else:
+                self.__setattr__('lin' + str(i), nn.Linear(cfg.linear_io[i][0], cfg.linear_io[i][1]))
+        self.activ = cfg.activ
+        self.dropout = cfg.dropout
+        self.num_rnn = cfg.num_rnn
+        self.num_linear = cfg.num_linear
+
+    def forward(self, input_seqs, training=False):
+        h = input_seqs
+        for i in range(self.num_rnn):
+            rnn = self.__getattr__('gru' + str(i))
+            h, _ = rnn(h)
+            if self.activ:
+                h = F.relu(h)
+        h = h[:, -1, :]
+        if self.dropout:
+            h = F.dropout(h, training=training)
+        for i in range(self.num_linear):
+            linear = self.__getattr__('lin' + str(i))
+            h = linear(h)
+            if self.activ:
+                h = F.relu(h)
+        return h

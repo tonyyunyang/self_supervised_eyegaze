@@ -66,6 +66,16 @@
     "n_heads": 4,
     "n_layers": 4,
     "emb_norm": false
+  },
+
+  "limu_classifier": {
+    "gru_v1": {
+
+    },
+    "gru_v2": {
+
+    },
+
   }
 
 }
