@@ -26,7 +26,7 @@ def limu_model4pretrain(config, feat_dim):
 
 def limu_fetch_classifier(method, config, input_dim, output_dim):
     if method == "gru":
-        model = ClassifierGRU(config, input=input_dim, output=output_dim)
+        model = ClassifierGRU(config, input_dim=input_dim, output_dim=output_dim)
     else:
         model = None
         print(f"Please Choose a valid classifier for the model, {method} is not a valid classifier")
@@ -285,25 +285,29 @@ class LIMUBertModel4Finetune(nn.Module):
 
 
 class ClassifierGRU(nn.Module):
-    def __init__(self, cfg, input=None, output=None, feats=False):
+    def __init__(self, cfg, input_dim=None, output_dim=None):
         super().__init__()
-        for i in range(cfg.num_rnn):
-            if input is not None and i == 0:
+        self.num_rnn = len(cfg["limu_classifier"]["gru_v1"]["rnn_layers"])
+        self.num_linear = len(cfg["limu_classifier"]["gru_v1"]["linear_io"])
+        for i in range(self.num_rnn):
+            if input_dim is not None and i == 0:
                 self.__setattr__('gru' + str(i),
-                                 nn.GRU(input, cfg.rnn_io[i][1], num_layers=cfg.num_layers[i], batch_first=True))
+                                 nn.GRU(input_dim, cfg["limu_classifier"]["gru_v1"]["rnn_io"][i][1],
+                                        num_layers=cfg["limu_classifier"]["gru_v1"]["rnn_layers"][i], batch_first=True))
             else:
                 self.__setattr__('gru' + str(i),
-                                 nn.GRU(cfg.rnn_io[i][0], cfg.rnn_io[i][1], num_layers=cfg.num_layers[i],
-                                        batch_first=True))
-        for i in range(cfg.num_linear):
-            if output is not None and i == cfg.num_linear - 1:
-                self.__setattr__('lin' + str(i), nn.Linear(cfg.linear_io[i][0], output))
+                                 nn.GRU(cfg["limu_classifier"]["gru_v1"]["rnn_io"][i][0],
+                                        cfg["limu_classifier"]["gru_v1"]["rnn_io"][i][1],
+                                        num_layers=cfg["limu_classifier"]["gru_v1"]["rnn_layers"][i], batch_first=True))
+        for i in range(self.num_linear):
+            if output_dim is not None and i == self.num_linear - 1:
+                self.__setattr__('lin' + str(i), nn.Linear(cfg["limu_classifier"]["gru_v1"]["linear_io"][i][0],
+                                                           output_dim))
             else:
-                self.__setattr__('lin' + str(i), nn.Linear(cfg.linear_io[i][0], cfg.linear_io[i][1]))
-        self.activ = cfg.activ
-        self.dropout = cfg.dropout
-        self.num_rnn = cfg.num_rnn
-        self.num_linear = cfg.num_linear
+                self.__setattr__('lin' + str(i), nn.Linear(cfg["limu_classifier"]["gru_v1"]["linear_io"][i][0],
+                                                           cfg["limu_classifier"]["gru_v1"]["linear_io"][i][1]))
+        self.activ = cfg["limu_classifier"]["gru_v1"]["activ"]
+        self.dropout = cfg["limu_classifier"]["gru_v1"]["dropout"]
 
     def forward(self, input_seqs, training=False):
         h = input_seqs

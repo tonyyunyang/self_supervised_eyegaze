@@ -3,7 +3,7 @@
     "test_mode": "One_out",
     "window_size": 150,
     "overlap": 0.8,
-    "pretrain_model": "results/kdd_model/One_out/linear/pretrain/freeze_False_epoch_9600_lr_0.0001_d_hidden_128_d_ff_256_n_heads_16_n_layer_3_pos_encode_learnable_activation_gelu_norm_BatchNorm",
+    "pretrain_model": "results/limu_model/One_out/pretrain/epoch_9600_lr_0.0001_d_hidden_72_d_ff_144_n_heads_4_n_layer_4_embNorm_False",
     "finetune_model": null,
     "batch_size": 128,
     "freeze": false
@@ -70,11 +70,12 @@
 
   "limu_classifier": {
     "gru_v1": {
-
-    },
-    "gru_v2": {
-
-    },
+      "rnn_layers": [2, 1],
+      "rnn_io": [[144, 20],[20, 10]],
+      "linear_io": [[10, 8]],
+      "activ": false,
+      "dropout": true
+    }
 
   }
 

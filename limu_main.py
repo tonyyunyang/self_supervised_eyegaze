@@ -4,6 +4,7 @@ import sys
 from modules.finetune_hyperparameters import LIMU_Finetune_Hyperparameters
 from modules.limu_model import limu_model4pretrain, limu_model4finetune, limu_fetch_classifier
 from modules.pretrain_hyperparameters import LIMU_Pretrain_Hyperparameters
+from utils.finetune import finetune_limu_model, eval_finetune_limu_model
 from utils.load_data_from_file import load_mixed_data, prepare_mixed_data_loader, load_one_out_data, \
     prepare_one_out_data_loader, limu_prepare_mixed_data_loader, limu_prepare_one_out_data_loader
 from utils.pretrain import pretrain_limu_model
@@ -60,9 +61,16 @@ def main():
     # If the pretrain_model path is provided, meaning that there is already a pretrained model, then directly finetune
     # After pretrain, finetune will be performed automatically, because the pretrain_model will be filled
     hyperparameters = LIMU_Finetune_Hyperparameters(config)
-    classifier = limu_fetch_classifier(config["limu_finetune"]["classifier"], config, input_dim=config["limu_model"]["d_hidden"],
-                                       output_dim=num_classes)
+    classifier = limu_fetch_classifier(config["limu_finetune"]["classifier"], config,
+                                       input_dim=config["limu_model"]["d_hidden"], output_dim=num_classes)
     model = limu_model4finetune(config, feat_dim, classifier=classifier, frozen_bert=False)
+    loss = hyperparameters.loss
+    optimizer = hyperparameters.optimizer(model.parameters(), hyperparameters.lr,
+                                          weight_decay=hyperparameters.weight_decay)
+
+    finetune_limu_model(model, loss, optimizer, eyegaze_data_loader[1], eyegaze_data_loader[2], config)
+
+    eval_finetune_limu_model(model, eyegaze_data_loader[3], config, encoder)
 
 
 if __name__ == "__main__":
