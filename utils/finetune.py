@@ -290,7 +290,7 @@ def finetune_limu_epoch(model, loss, optimizer, train_set, val_set, config, devi
 
         optimizer.zero_grad()
 
-        predictions = model(X)
+        predictions = model(X, True)
         compute_loss = loss(predictions, targets)
 
         compute_loss = compute_loss.mean()
@@ -303,7 +303,7 @@ def finetune_limu_epoch(model, loss, optimizer, train_set, val_set, config, devi
 
     # Evaluate the model
     model = model.eval()
-    val_loss = 0
+    val_loss_sum = 0
 
     # Initialize lists to store true and predicted labels
     true_labels = []
@@ -315,20 +315,19 @@ def finetune_limu_epoch(model, loss, optimizer, train_set, val_set, config, devi
         X = X.to(device)
         # padding_masks = padding_masks.to(device)
 
-        predictions = model(X)
+        predictions = model(X, False)
 
         compute_loss = loss(predictions, targets)
-        batch_loss = torch.sum(compute_loss).cpu().item()
-        mean_loss = batch_loss / len(compute_loss)
+
+        compute_loss = compute_loss.mean()
 
         # Collect true and predicted labels
         true_labels.extend(targets.cpu().numpy())
         pred_labels.extend(torch.argmax(predictions, dim=1).cpu().numpy())
 
-        total_val_samples += len(compute_loss)
-        val_loss += batch_loss
+        val_loss_sum += compute_loss.item()
 
-    val_loss = val_loss / total_val_samples
+    val_loss = val_loss_sum / len(val_set)
 
     # Compute validation accuracy and F1 score
     val_acc = accuracy_score(true_labels, pred_labels)
@@ -370,10 +369,16 @@ def eval_finetune_limu_model(model, test_set, config, encoder):
     for i, batch in enumerate(test_set):
         X, targets, padding_masks, IDs = batch
         targets = targets.to(device)
-        predictions = model(X.to(device), False)
+        X = X.to(device)
+
+        predictions = model(X, False)
 
         true_labels.extend(targets.cpu().numpy())
         pred_labels.extend(torch.argmax(predictions, dim=1).cpu().numpy())
+
+    # Compute validation accuracy and F1 score
+    test_acc = accuracy_score(true_labels, pred_labels)
+    test_f1 = f1_score(true_labels, pred_labels, average='weighted')  # Use 'weighted' if you have imbalanced classes
 
     # Decode the labels
     true_labels_decoded = encoder.inverse_transform(true_labels)
@@ -390,4 +395,4 @@ def eval_finetune_limu_model(model, test_set, config, encoder):
     plt.ylabel('True Labels')
 
     # Save the confusion matrix plot
-    plt.savefig(os.path.join(config["general"]["finetune_model"], "confusion_matrix.png"))
+    plt.savefig(os.path.join(config["general"]["finetune_model"], f"f1_{test_f1}_acc_{test_acc}_confusion_matrix.png"))
