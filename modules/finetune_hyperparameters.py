@@ -30,6 +30,7 @@ class KDD_Finetune_Hyperparameters:
         else:
             self.weight_decay = weight_decay
 
+
 class LIMU_Finetune_Hyperparameters:
     def __init__(self, config):
         self.epoch = config["limu_finetune"]["epoch"]
@@ -45,7 +46,7 @@ class LIMU_Finetune_Hyperparameters:
             print(f"Optimizer either Adam or RAdam")
             sys.exit()
 
-        self.loss = nn.CrossEntropyLoss()  # outputs loss for each batch element
+        self.loss = nn.CrossEntropyLoss()
 
         weight_decay = config["limu_finetune"]["weight_decay"]
         if weight_decay is None:

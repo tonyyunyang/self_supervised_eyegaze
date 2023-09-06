@@ -1,3 +1,4 @@
+import os
 import sys
 
 import torch.nn as nn
@@ -36,6 +37,10 @@ def limu_fetch_classifier(method, config, input_dim, output_dim):
 
 def limu_model4finetune(config, feat_dim, classifier, frozen_bert):
     model = LIMUBertModel4Finetune(config, feat_dim, classifier=classifier, frozen_bert=frozen_bert)
+
+    model_path = os.path.join(config["general"]["pretrain_model"], "continue_model.pth")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    model.load_self(model_path, device)
 
     print("Model:\n{}".format(model))
     print("Total number of parameters: {}".format(count_parameters(model)))
@@ -280,6 +285,7 @@ class LIMUBertModel4Finetune(nn.Module):
         model_dicts = torch.load(model_file, map_location=map_location).items()
         for k, v in model_dicts:
             if k in state_dict:
+                print(f"Loading {k} limu pretrain layer")
                 state_dict.update({k: v})
         self.load_state_dict(state_dict)
 

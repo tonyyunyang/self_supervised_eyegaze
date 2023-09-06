@@ -280,37 +280,30 @@ def finetune_limu_model(model, loss, optimizer, train_set, val_set, config):
 def finetune_limu_epoch(model, loss, optimizer, train_set, val_set, config, device, epoch, l2_reg=False):
     # Train the model first
     model = model.train()
-    train_loss = 0
-    total_train_samples = 0
 
+    train_loss_sum = 0.0
     for i, batch in enumerate(train_set):
         X, targets, padding_masks, IDs = batch
         targets = targets.to(device)
+        X = X.to(device)
         # padding_masks = padding_masks.to(device)
 
-        # Zero gradients, perform a backward pass, and update the weights.
         optimizer.zero_grad()
 
-        predictions = model(X.to(device), True)
-
+        predictions = model(X)
         compute_loss = loss(predictions, targets)
-        batch_loss = torch.sum(compute_loss)
 
-        total_loss = compute_loss.mean()
-        total_loss.backward()
-
+        compute_loss = compute_loss.mean()
+        compute_loss.backward()
         optimizer.step()
 
-        with torch.no_grad():
-            total_train_samples += len(compute_loss)
-            train_loss += batch_loss.item()
+        train_loss_sum += compute_loss.item()
 
-    train_loss = train_loss / total_train_samples
+    train_loss = train_loss_sum / len(train_set)
 
     # Evaluate the model
     model = model.eval()
-    val_loss = 0.0
-    total_val_samples = 0
+    val_loss = 0
 
     # Initialize lists to store true and predicted labels
     true_labels = []
@@ -319,11 +312,14 @@ def finetune_limu_epoch(model, loss, optimizer, train_set, val_set, config, devi
     for i, batch in enumerate(val_set):
         X, targets, padding_masks, IDs = batch
         targets = targets.to(device)
+        X = X.to(device)
         # padding_masks = padding_masks.to(device)
-        predictions = model(X.to(device), False)
+
+        predictions = model(X)
 
         compute_loss = loss(predictions, targets)
         batch_loss = torch.sum(compute_loss).cpu().item()
+        mean_loss = batch_loss / len(compute_loss)
 
         # Collect true and predicted labels
         true_labels.extend(targets.cpu().numpy())
