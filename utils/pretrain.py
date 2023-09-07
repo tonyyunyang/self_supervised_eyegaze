@@ -37,6 +37,9 @@ def pretrain_kdd_model(model, loss, optimizer, pretrain_data, config):
     path = os.path.join(path, f"pretrain")
     os.makedirs(path, exist_ok=True)
 
+    path = os.path.join(path, f"window_size_{format(config['general']['window_size'] / 30, '.0f').rstrip('0').rstrip('.')}sec")
+    os.makedirs(path, exist_ok=True)
+
     path = os.path.join(path, f"freeze_{config['general']['freeze']}_epoch_{config['kdd_pretrain']['epoch']}_"
                               f"lr_{format(config['kdd_pretrain']['lr'], '.10f').rstrip('0').rstrip('.')}_"
                               f"d_hidden_{config['kdd_model']['d_hidden']}_d_ff_{config['kdd_model']['d_ff']}_"
@@ -178,6 +181,9 @@ def pretrain_limu_model(model, loss, optimizer, pretrain_data, config):
     os.makedirs(path, exist_ok=True)
 
     path = os.path.join(path, f"pretrain")
+    os.makedirs(path, exist_ok=True)
+
+    path = os.path.join(path, f"window_size_{format(config['general']['window_size'] / 30, '.0f').rstrip('0').rstrip('.')}sec")
     os.makedirs(path, exist_ok=True)
 
     path = os.path.join(path, f"epoch_{config['limu_pretrain']['epoch']}_"

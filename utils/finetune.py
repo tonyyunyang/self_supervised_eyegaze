@@ -32,6 +32,9 @@ def finetune_kdd_model(model, loss, optimizer, train_set, val_set, config):
     path = os.path.join(path, f"finetune")
     os.makedirs(path, exist_ok=True)
 
+    path = os.path.join(path, f"window_size_{format(config['general']['window_size'] / 30, '.0f').rstrip('0').rstrip('.')}sec")
+    os.makedirs(path, exist_ok=True)
+
     path = os.path.join(path, f"freeze_{config['general']['freeze']}_epoch_{config['kdd_finetune']['epoch']}_"
                               f"lr_{format(config['kdd_finetune']['lr'], '.10f').rstrip('0').rstrip('.')}_"
                               f"d_hidden_{config['kdd_model']['d_hidden']}_d_ff_{config['kdd_model']['d_ff']}_"
@@ -190,6 +193,10 @@ def eval_finetune_kdd_model(model, test_set, config, encoder):
         true_labels.extend(targets.cpu().numpy())
         pred_labels.extend(torch.argmax(predictions, dim=1).cpu().numpy())
 
+    # Compute validation accuracy and F1 score
+    test_acc = accuracy_score(true_labels, pred_labels)
+    test_f1 = f1_score(true_labels, pred_labels, average='weighted')  # Use 'weighted' if you have imbalanced classes
+
     # Decode the labels
     true_labels_decoded = encoder.inverse_transform(true_labels)
     pred_labels_decoded = encoder.inverse_transform(pred_labels)
@@ -205,7 +212,9 @@ def eval_finetune_kdd_model(model, test_set, config, encoder):
     plt.ylabel('True Labels')
 
     # Save the confusion matrix plot
-    plt.savefig(os.path.join(config["general"]["finetune_model"], "confusion_matrix.png"))
+    plt.savefig(os.path.join(config["general"]["finetune_model"], f"f1_{format(test_f1, '.5f').rstrip('0').rstrip('.')}_"
+                                                                  f"acc_{format(test_acc, '.5f').rstrip('0').rstrip('.')}_"
+                                                                  f"confusion_matrix.png"))
 
 
 def finetune_limu_model(model, loss, optimizer, train_set, val_set, config):
@@ -227,6 +236,9 @@ def finetune_limu_model(model, loss, optimizer, train_set, val_set, config):
     os.makedirs(path, exist_ok=True)
 
     path = os.path.join(path, f"finetune")
+    os.makedirs(path, exist_ok=True)
+
+    path = os.path.join(path, f"window_size_{format(config['general']['window_size'] / 30, '.0f').rstrip('0').rstrip('.')}sec")
     os.makedirs(path, exist_ok=True)
 
     path = os.path.join(path, f"epoch_{config['limu_finetune']['epoch']}_"
@@ -395,4 +407,6 @@ def eval_finetune_limu_model(model, test_set, config, encoder):
     plt.ylabel('True Labels')
 
     # Save the confusion matrix plot
-    plt.savefig(os.path.join(config["general"]["finetune_model"], f"f1_{test_f1}_acc_{test_acc}_confusion_matrix.png"))
+    plt.savefig(os.path.join(config["general"]["finetune_model"], f"f1_{format(test_f1, '.5f').rstrip('0').rstrip('.')}_"
+                                                                  f"acc_{format(test_acc, '.5f').rstrip('0').rstrip('.')}_"
+                                                                  f"confusion_matrix.png"))

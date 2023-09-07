@@ -277,6 +277,7 @@ class LIMUBertModel4Finetune(nn.Module):
 
     def forward(self, input_seqs, training=False):  # training
         h = self.transformer(input_seqs)
+        # print(f"Shape of output from self.transformer {h.shape}")
         h = self.classifier(h, training)
         return h
 
