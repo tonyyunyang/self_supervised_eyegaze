@@ -294,7 +294,7 @@ class TSTransformerEncoder(nn.Module):
         elif self.embedding == "convolution":
             inp = X.permute(0, 2, 1)  # permute to (batch_size, feat_dim, seq_length)
             inp = self.project_inp(inp)
-            inp = X.permute(1, 0, 2)  # permute back to (seq_length, batch_size, d_model)
+            inp = inp.permute(2, 0, 1)  # permute back to (seq_length, batch_size, d_model)
         else:
             print(f"Either linear / convolution")
             sys.exit()
@@ -397,7 +397,7 @@ class TSTransformerEncoderClassiregressor(nn.Module):
         elif self.embedding == "convolution":
             inp = X.permute(0, 2, 1)  # permute to (batch_size, feat_dim, seq_length)
             inp = self.project_inp(inp)
-            inp = X.permute(1, 0, 2)  # permute back to (seq_length, batch_size, d_model)
+            inp = X.permute(2, 0, 1)  # permute back to (seq_length, batch_size, d_model)
         else:
             print(f"Either linear / convolution")
             sys.exit()

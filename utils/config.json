@@ -3,15 +3,15 @@
     "test_mode": "One_out",
     "window_size": 150,
     "overlap": 0.8,
-    "pretrain_model": "results/limu_model/One_out/pretrain/epoch_9600_lr_0.0001_d_hidden_72_d_ff_144_n_heads_4_n_layer_4_embNorm_False",
+    "pretrain_model": null,
     "finetune_model": null,
     "batch_size": 128,
     "freeze": false
   },
 
   "kdd_pretrain": {
-    "epoch": 10,
-    "lr": 0.001,
+    "epoch": 9600,
+    "lr": 0.0001,
     "optimizer": "RAdam",
     "weight_decay": null,
     "harden": false
@@ -57,7 +57,7 @@
     "pos_encoding": "learnable",
     "activation": "gelu",
     "norm": "BatchNorm",
-    "projection": "linear"
+    "projection": "convolution"
   },
 
   "limu_model": {
@@ -72,9 +72,9 @@
     "gru_v1": {
       "rnn_layers": [2, 1],
       "rnn_io": [[144, 20],[20, 10]],
-      "linear_io": [[10, 8]],
+      "linear_io": [[10, 6]],
       "activ": false,
-      "dropout": true
+      "dropout": false
     }
 
   }
