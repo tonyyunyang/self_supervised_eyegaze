@@ -66,7 +66,8 @@ def kdd_model4finetune(config, feat_dim, num_classes):
 
     state_dict = torch.load(model_path)
 
-    for key in list(state_dict.keys()):  # need to convert keys to list to avoid RuntimeError due to changing size during iteration
+    for key in list(
+            state_dict.keys()):  # need to convert keys to list to avoid RuntimeError due to changing size during iteration
         if key.startswith('output_layer'):
             state_dict.pop(key)
             print(f"Popped layer {key}")
@@ -244,7 +245,7 @@ class TSTransformerEncoder(nn.Module):
             self.project_inp = nn.Linear(feat_dim, d_model)
         elif self.embedding == "convolution":
             # Calculate the output sequence size after the 1D Conv layer
-            conv_seq_length = int(floor((self.max_len + 2 * padding - dilation * (kernel_size - 1)) / stride + 1))
+            conv_seq_length = int(floor((self.max_len + 2 * padding - dilation * (kernel_size - 1) - 1) / stride + 1))
 
             self.project_inp = nn.Conv1d(feat_dim, d_model, kernel_size, stride, padding, dilation)
             self.max_len = conv_seq_length
@@ -266,7 +267,8 @@ class TSTransformerEncoder(nn.Module):
         if self.embedding == "linear":
             self.output_layer = nn.Linear(d_model, feat_dim)
         elif self.embedding == "convolution":
-            self.output_layer = nn.ConvTranspose1d(d_model, feat_dim, kernel_size, stride, padding, dilation)
+            self.output_layer = nn.ConvTranspose1d(d_model, feat_dim, kernel_size=kernel_size, stride=stride,
+                                                   padding=padding, dilation=dilation)
         else:
             print(f"Either linear / convolution")
             sys.exit()
@@ -329,7 +331,8 @@ class TSTransformerEncoderClassiregressor(nn.Module):
     """
 
     def __init__(self, feat_dim, max_len, d_model, n_heads, num_layers, dim_feedforward, num_classes,
-                 dropout=0.1, pos_encoding='fixed', activation='gelu', norm='BatchNorm', embedding='convolution', freeze=False):
+                 dropout=0.1, pos_encoding='fixed', activation='gelu', norm='BatchNorm', embedding='convolution',
+                 freeze=False):
         super(TSTransformerEncoderClassiregressor, self).__init__()
 
         self.max_len = max_len
@@ -347,7 +350,7 @@ class TSTransformerEncoderClassiregressor(nn.Module):
             self.project_inp = nn.Linear(feat_dim, d_model)
         elif self.embedding == "convolution":
             # Calculate the output sequence size after the 1D Conv layer
-            conv_seq_length = int(floor((self.max_len + 2 * padding - dilation * (kernel_size - 1)) / stride + 1))
+            conv_seq_length = int(floor((self.max_len + 2 * padding - dilation * (kernel_size - 1) - 1) / stride + 1))
 
             self.project_inp = nn.Conv1d(feat_dim, d_model, kernel_size, stride, padding, dilation)
             self.max_len = conv_seq_length
@@ -355,7 +358,7 @@ class TSTransformerEncoderClassiregressor(nn.Module):
             print(f"Either linear / convolution")
             sys.exit()
 
-        self.pos_enc = get_pos_encoder(pos_encoding)(d_model, dropout=dropout * (1.0 - freeze), max_len=max_len)
+        self.pos_enc = get_pos_encoder(pos_encoding)(d_model, dropout=dropout * (1.0 - freeze), max_len=self.max_len)
 
         if norm == 'LayerNorm':
             encoder_layer = TransformerEncoderLayer(d_model, self.n_heads, dim_feedforward, dropout * (1.0 - freeze),
@@ -397,7 +400,7 @@ class TSTransformerEncoderClassiregressor(nn.Module):
         elif self.embedding == "convolution":
             inp = X.permute(0, 2, 1)  # permute to (batch_size, feat_dim, seq_length)
             inp = self.project_inp(inp)
-            inp = X.permute(2, 0, 1)  # permute back to (seq_length, batch_size, d_model)
+            inp = inp.permute(2, 0, 1)  # permute back to (seq_length, batch_size, d_model)
         else:
             print(f"Either linear / convolution")
             sys.exit()
