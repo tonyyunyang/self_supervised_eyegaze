@@ -67,7 +67,8 @@ def finetune_kdd_model(model, loss, optimizer, train_set, val_set, config):
         epoch_runtime = time.time() - epoch_start_time
 
         print(
-            f"Epoch {epoch}/{config['kdd_finetune']['epoch']}, Train Loss: {train_loss:.4f}, Accuracy: {val_acc:.4f}, F1 Score: {val_f1:.4f}, Time: {epoch_runtime}")
+            f"Epoch {epoch}/{config['kdd_finetune']['epoch']}, Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}, "
+            f"Accuracy: {val_acc:.4f}, F1 Score: {val_f1:.4f}, Time: {epoch_runtime}")
 
         # Save the best model based on validation accuracy
         if val_acc > best_val_acc:
@@ -272,7 +273,8 @@ def finetune_limu_model(model, loss, optimizer, train_set, val_set, config):
         epoch_runtime = time.time() - epoch_start_time
 
         print(
-            f"Epoch {epoch}/{config['limu_finetune']['epoch']}, Train Loss: {train_loss:.4f}, Accuracy: {val_acc:.4f}, F1 Score: {val_f1:.4f}, Time: {epoch_runtime}")
+            f"Epoch {epoch}/{config['limu_finetune']['epoch']}, Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f},"
+            f" Accuracy: {val_acc:.4f}, F1 Score: {val_f1:.4f}, Time: {epoch_runtime}")
 
         # Save the best model based on validation accuracy
         if val_acc > best_val_acc:

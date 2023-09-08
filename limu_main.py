@@ -16,6 +16,8 @@ def main():
         config = json.load(file)
     print(config)
 
+    # config["general"]["pretrain_model"] = "results/limu_model/One_out/pretrain/window_size_5sec/epoch_9600_lr_0.0001_d_hidden_72_d_ff_144_n_heads_4_n_layer_4_embNorm_False"
+
     # First load the data into dataloader according to chosen test_mode: Mixed or One_out
     if config["general"]["test_mode"] == "Mixed":
         data, labels, encoder = load_mixed_data(window_size=config["general"]["window_size"],
