@@ -33,8 +33,8 @@
   },
 
   "limu_finetune": {
-    "epoch": 10,
-    "lr": 0.001,
+    "epoch": 3000,
+    "lr": 0.00006,
     "optimizer": "Adam",
     "weight_decay": null,
     "classifier": "gru"
@@ -57,7 +57,7 @@
     "pos_encoding": "learnable",
     "activation": "gelu",
     "norm": "BatchNorm",
-    "projection": "convolution"
+    "projection": "linear"
   },
 
   "limu_model": {
