@@ -10,7 +10,7 @@
   },
 
   "kdd_pretrain": {
-    "epoch": 1000,
+    "epoch": 5000,
     "lr": 0.0001,
     "optimizer": "RAdam",
     "weight_decay": null,
@@ -18,14 +18,14 @@
   },
 
   "kdd_finetune": {
-    "epoch":1000,
-    "lr": 0.0001,
+    "epoch":10000,
+    "lr": 0.00001,
     "optimizer": "RAdam",
     "weight_decay": null
   },
 
   "limu_pretrain": {
-    "epoch": 2000,
+    "epoch": 5000,
     "lr": 0.0001,
     "optimizer": "Adam",
     "weight_decay": null,
@@ -33,8 +33,8 @@
   },
 
   "limu_finetune": {
-    "epoch": 1000,
-    "lr": 0.0001,
+    "epoch": 10000,
+    "lr": 0.00001,
     "optimizer": "Adam",
     "weight_decay": null,
     "classifier": "gru"
