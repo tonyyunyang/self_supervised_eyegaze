@@ -10,7 +10,7 @@
   },
 
   "kdd_pretrain": {
-    "epoch": 5200,
+    "epoch": 1000,
     "lr": 0.0001,
     "optimizer": "RAdam",
     "weight_decay": null,
@@ -18,14 +18,14 @@
   },
 
   "kdd_finetune": {
-    "epoch":4000,
-    "lr": 0.00001,
+    "epoch":1000,
+    "lr": 0.0001,
     "optimizer": "RAdam",
     "weight_decay": null
   },
 
   "limu_pretrain": {
-    "epoch": 6600,
+    "epoch": 2000,
     "lr": 0.0001,
     "optimizer": "Adam",
     "weight_decay": null,
@@ -33,8 +33,8 @@
   },
 
   "limu_finetune": {
-    "epoch": 4000,
-    "lr": 0.00001,
+    "epoch": 1000,
+    "lr": 0.0001,
     "optimizer": "Adam",
     "weight_decay": null,
     "classifier": "gru"
@@ -49,10 +49,10 @@
   },
 
   "kdd_model": {
-    "d_hidden": 128,
+    "d_hidden": 64,
     "d_ff": 256,
-    "n_heads": 16,
-    "n_layers": 3,
+    "n_heads": 8,
+    "n_layers": 1,
     "dropout": 0.1,
     "pos_encoding": "learnable",
     "activation": "gelu",
@@ -61,8 +61,8 @@
   },
 
   "limu_model": {
-    "d_hidden": 72,
-    "d_ff": 144,
+    "d_hidden": 24,
+    "d_ff": 72,
     "n_heads": 4,
     "n_layers": 4,
     "emb_norm": false
@@ -71,7 +71,7 @@
   "limu_classifier": {
     "gru_v1": {
       "rnn_layers": [2, 1],
-      "rnn_io": [[144, 20],[20, 10]],
+      "rnn_io": [[72, 20],[20, 10]],
       "linear_io": [[10, 6]],
       "activ": false,
       "dropout": false
