@@ -82,6 +82,32 @@ def kdd_model4finetune(config, feat_dim, num_classes):
     return model
 
 
+def kdd_model4fullysupervise(config, feat_dim, num_classes):
+    max_seq_len = config["general"]["window_size"]
+
+    model = TSTransformerEncoderClassiregressor(
+        feat_dim,
+        max_seq_len,
+        config["kdd_model"]["d_hidden"],
+        config["kdd_model"]["n_heads"],
+        config["kdd_model"]["n_layers"],
+        config["kdd_model"]["d_ff"],
+        num_classes,
+        dropout=config["kdd_model"]["dropout"],
+        pos_encoding=config["kdd_model"]["pos_encoding"],
+        activation=config["kdd_model"]["activation"],
+        norm=config["kdd_model"]["norm"],
+        embedding=config["kdd_model"]["projection"],
+        freeze=config["general"]["freeze"],
+    )
+
+    print("Model:\n{}".format(model))
+    print("Total number of parameters: {}".format(count_parameters(model)))
+    print("Trainable parameters: {}".format(count_parameters(model, trainable=True)))
+
+    return model
+
+
 def _get_activation_fn(activation):
     if activation == "relu":
         return F.relu

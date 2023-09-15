@@ -10,7 +10,7 @@
   },
 
   "kdd_pretrain": {
-    "epoch": 5000,
+    "epoch": 500,
     "lr": 0.0001,
     "optimizer": "RAdam",
     "weight_decay": null,
@@ -18,15 +18,15 @@
   },
 
   "kdd_finetune": {
-    "epoch":10000,
-    "lr": 0.00001,
+    "epoch": 500,
+    "lr": 0.0001,
     "optimizer": "RAdam",
     "weight_decay": null
   },
 
   "limu_pretrain": {
     "epoch": 5000,
-    "lr": 0.0001,
+    "lr": 0.001,
     "optimizer": "Adam",
     "weight_decay": null,
     "harden": false
@@ -49,10 +49,10 @@
   },
 
   "kdd_model": {
-    "d_hidden": 64,
+    "d_hidden": 128,
     "d_ff": 256,
-    "n_heads": 8,
-    "n_layers": 1,
+    "n_heads": 16,
+    "n_layers": 3,
     "dropout": 0.1,
     "pos_encoding": "learnable",
     "activation": "gelu",
