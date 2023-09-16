@@ -75,6 +75,14 @@ def kdd_model4finetune(config, feat_dim, num_classes):
 
     print('Loaded model from {}'.format(model_path))
 
+    if config["general"]["freeze"]:
+        for name, param in model.named_parameters():
+            print(f"{name}")
+            if name.startswith('output_layer'):
+                param.requires_grad = True
+            else:
+                param.requires_grad = False
+
     print("Model:\n{}".format(model))
     print("Total number of parameters: {}".format(count_parameters(model)))
     print("Trainable parameters: {}".format(count_parameters(model, trainable=True)))

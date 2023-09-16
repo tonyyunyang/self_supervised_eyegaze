@@ -14,6 +14,9 @@ from torch.utils.data import DataLoader
 def load_mixed_data(window_size, overlap):
     directory = "data/DesktopActivity/ALL"
     step_size = int(window_size * (1 - overlap))
+
+    print(f"The step size of each sample is {step_size}, this is determined via the overlap")
+
     data = []
     labels = []
     for filename in os.listdir(directory):
@@ -36,6 +39,8 @@ def load_mixed_data(window_size, overlap):
 def load_one_out_data(window_size, overlap):
     directory = "data/DesktopActivity/ALL"
     step_size = int(window_size * (1 - overlap))
+
+    print(f"The step size of each sample is {step_size}, this is determined via the overlap")
 
     train_data = []
     train_labels = []

@@ -368,6 +368,79 @@ def finetune_limu_model(model, loss, optimizer, train_set, val_set, config):
     limu_finetune_save_metrics(train_loss_list, val_loss_list, val_accuracy_list, val_f1_score_list, config)
 
 
+def full_supervise_train_limu_model(model, loss, optimizer, train_set, val_set, config):
+    # Check if CUDA is available
+    # if not torch.cuda.is_available():
+    #     print("CUDA is not available. Please activate CUDA for GPU acceleration.")
+    #     print("This is a computationally expensive training process and requires GPU acceleration.")
+    #     sys.exit()
+    # print("CUDA ACTIVATED")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"=============================================================\n"
+          f"=====================Training via {device}===================\n"
+          f"=============================================================")
+
+    path = os.path.join("results", f"limu_model")
+    os.makedirs(path, exist_ok=True)
+
+    path = os.path.join(path, f"{config['general']['test_mode']}")
+    os.makedirs(path, exist_ok=True)
+
+    path = os.path.join(path, f"fully_supervised")
+    os.makedirs(path, exist_ok=True)
+
+    path = os.path.join(path, f"window_size_{format(config['general']['window_size'] / 30, '.0f').rstrip('0').rstrip('.')}sec")
+    os.makedirs(path, exist_ok=True)
+
+    path = os.path.join(path, f"epoch_{config['limu_finetune']['epoch']}_"
+                              f"lr_{format(config['limu_finetune']['lr'], '.10f').rstrip('0').rstrip('.')}_"
+                              f"d_hidden_{config['limu_model']['d_hidden']}_d_ff_{config['limu_model']['d_ff']}_"
+                              f"n_heads_{config['limu_model']['n_heads']}_n_layer_{config['limu_model']['n_layers']}_"
+                              f"embNorm_{config['limu_model']['emb_norm']}")
+    os.makedirs(path, exist_ok=True)
+
+    config["general"]["finetune_model"] = path
+
+    model = model.to(device)
+
+    train_loss_list = []
+    val_loss_list = []
+    val_accuracy_list = []
+    val_f1_score_list = []
+
+    best_val_acc = 0  # Initialize variable to keep track of best validation accuracy
+
+    for epoch in range(1, config["limu_finetune"]["epoch"] + 1):
+        epoch_start_time = time.time()
+
+        train_loss, val_loss, val_acc, val_f1 = finetune_limu_epoch(model, loss, optimizer, train_set, val_set, config,
+                                                                   device, epoch, l2_reg=False)
+        train_loss_list.append(train_loss)
+        val_loss_list.append(val_loss)
+        val_accuracy_list.append(val_acc)
+        val_f1_score_list.append(val_f1)
+
+        epoch_runtime = time.time() - epoch_start_time
+
+        print(
+            f"Epoch {epoch}/{config['limu_finetune']['epoch']}, Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f},"
+            f" Accuracy: {val_acc:.4f}, F1 Score: {val_f1:.4f}, Time: {epoch_runtime}")
+
+        # Save the best model based on validation accuracy
+        if val_acc > best_val_acc:
+            best_val_acc = val_acc
+            torch.save(
+                model.state_dict(), os.path.join(config["general"]["finetune_model"], "best_model.pth")
+            )
+
+    # Save the model for continuing the training
+    torch.save(
+        model.state_dict(), os.path.join(config["general"]["finetune_model"], "continue_model.pth")
+    )
+
+    limu_finetune_save_metrics(train_loss_list, val_loss_list, val_accuracy_list, val_f1_score_list, config)
+
+
 def finetune_limu_epoch(model, loss, optimizer, train_set, val_set, config, device, epoch, l2_reg=False):
     # Train the model first
     model = model.train()

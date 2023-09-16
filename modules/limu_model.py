@@ -49,6 +49,16 @@ def limu_model4finetune(config, feat_dim, classifier, frozen_bert):
     return model
 
 
+def limu_model4fullysupervise(config, feat_dim, classifier, frozen_bert):
+    model = LIMUBertModel4Finetune(config, feat_dim, classifier=classifier, frozen_bert=frozen_bert)
+
+    print("Model:\n{}".format(model))
+    print("Total number of parameters: {}".format(count_parameters(model)))
+    print("Trainable parameters: {}".format(count_parameters(model, trainable=True)))
+
+    return model
+
+
 def gelu(x):
     "Implementation of the gelu activation function by Hugging Face"
     return x * 0.5 * (1.0 + torch.erf(x / math.sqrt(2.0)))
