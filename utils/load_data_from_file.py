@@ -71,6 +71,46 @@ def load_one_out_data(window_size, overlap):
     return np.array(train_data), np.array(encoded_train_labels), np.array(test_data), np.array(encoded_test_labels), encoder
 
 
+def load_one_out_data_with_difference(window_size, overlap):
+    directory = "data/DesktopActivity/ALL"
+    step_size = int(window_size * (1 - overlap))
+
+    print(f"The step size of each sample is {step_size}, this is determined via the overlap")
+
+    train_data = []
+    train_labels = []
+    test_data = []
+    test_labels = []
+
+    for filename in os.listdir(directory):
+        if filename.endswith(".csv"):
+            label = filename.split("_")[1].split(".")[0]
+            df = pd.read_csv(os.path.join(directory, filename), header=None)
+
+            # Calculate the differences for the entire dataframe
+            df_diff = df.diff().fillna(0)
+
+            for i in range(0, len(df) - window_size + 1, step_size):
+                window = df.iloc[i:i + window_size].values
+                diff_window = df_diff.iloc[i:i + window_size].values
+
+                # Combine the original window and the difference window
+                combined_window = np.concatenate([window, diff_window], axis=1)
+
+                if filename.startswith("P08"):
+                    test_data.append(combined_window)
+                    test_labels.append(label)
+                else:
+                    train_data.append(combined_window)
+                    train_labels.append(label)
+
+    encoder = LabelEncoder()
+    encoded_train_labels = encoder.fit_transform(train_labels)
+    encoded_test_labels = encoder.fit_transform(test_labels)
+    print_encoded_classes(encoder)
+
+    return np.array(train_data), np.array(encoded_train_labels), np.array(test_data), np.array(encoded_test_labels), encoder
+
 def prepare_mixed_data_loader(data, labels, batch_size, max_len):
     # Get the range of indices for the data
     indices = list(range(len(data)))
