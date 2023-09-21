@@ -32,7 +32,7 @@ def finetune_kdd_model(model, loss, optimizer, train_set, val_set, config):
     path = os.path.join(path, f"finetune")
     os.makedirs(path, exist_ok=True)
 
-    path = os.path.join(path, f"window_size_{format(config['general']['window_size'] / 30, '.0f').rstrip('0').rstrip('.')}sec")
+    path = os.path.join(path, f"window_size_{int(config['general']['window_size'] / 30)}sec")
     os.makedirs(path, exist_ok=True)
 
     path = os.path.join(path, f"freeze_{config['general']['freeze']}_epoch_{config['kdd_finetune']['epoch']}_"
@@ -316,7 +316,7 @@ def finetune_limu_model(model, loss, optimizer, train_set, val_set, config):
     path = os.path.join(path, f"finetune")
     os.makedirs(path, exist_ok=True)
 
-    path = os.path.join(path, f"window_size_{format(config['general']['window_size'] / 30, '.0f').rstrip('0').rstrip('.')}sec")
+    path = os.path.join(path, f"window_size_{int(config['general']['window_size'] / 30)}sec")
     os.makedirs(path, exist_ok=True)
 
     path = os.path.join(path, f"epoch_{config['limu_finetune']['epoch']}_"

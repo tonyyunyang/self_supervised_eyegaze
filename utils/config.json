@@ -10,7 +10,7 @@
   },
 
   "kdd_pretrain": {
-    "epoch": 500,
+    "epoch": 5,
     "lr": 0.0001,
     "optimizer": "RAdam",
     "weight_decay": null,
@@ -18,7 +18,7 @@
   },
 
   "kdd_finetune": {
-    "epoch": 1000,
+    "epoch": 2000,
     "lr": 0.00001,
     "optimizer": "RAdam",
     "weight_decay": null
