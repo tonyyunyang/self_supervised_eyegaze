@@ -2,7 +2,7 @@
   "general": {
     "test_mode": "One_out",
     "window_size": 900,
-    "overlap": 0.95,
+    "overlap": 0.98,
     "pretrain_model": null,
     "finetune_model": null,
     "batch_size": 128,
