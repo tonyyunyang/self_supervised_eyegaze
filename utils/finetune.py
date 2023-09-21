@@ -35,6 +35,9 @@ def finetune_kdd_model(model, loss, optimizer, train_set, val_set, config):
     path = os.path.join(path, f"window_size_{int(config['general']['window_size'] / 30)}sec")
     os.makedirs(path, exist_ok=True)
 
+    path = os.path.join(path, f"feat_dim_{int(config['general']['feat_dim'])}")
+    os.makedirs(path, exist_ok=True)
+
     path = os.path.join(path, f"freeze_{config['general']['freeze']}_epoch_{config['kdd_finetune']['epoch']}_"
                               f"lr_{format(config['kdd_finetune']['lr'], '.10f').rstrip('0').rstrip('.')}_"
                               f"d_hidden_{config['kdd_model']['d_hidden']}_d_ff_{config['kdd_model']['d_ff']}_"
@@ -109,7 +112,10 @@ def full_supervise_train_kdd_model(model, loss, optimizer, train_set, val_set, c
     path = os.path.join(path, f"fully_supervised")
     os.makedirs(path, exist_ok=True)
 
-    path = os.path.join(path, f"window_size_{format(config['general']['window_size'] / 30, '.0f').rstrip('0').rstrip('.')}sec")
+    path = os.path.join(path, f"window_size_{int(config['general']['window_size'] / 30)}sec")
+    os.makedirs(path, exist_ok=True)
+
+    path = os.path.join(path, f"feat_dim_{int(config['general']['feat_dim'])}")
     os.makedirs(path, exist_ok=True)
 
     path = os.path.join(path, f"freeze_{config['general']['freeze']}_epoch_{config['kdd_finetune']['epoch']}_"
@@ -319,6 +325,9 @@ def finetune_limu_model(model, loss, optimizer, train_set, val_set, config):
     path = os.path.join(path, f"window_size_{int(config['general']['window_size'] / 30)}sec")
     os.makedirs(path, exist_ok=True)
 
+    path = os.path.join(path, f"feat_dim_{int(config['general']['feat_dim'])}")
+    os.makedirs(path, exist_ok=True)
+
     path = os.path.join(path, f"epoch_{config['limu_finetune']['epoch']}_"
                               f"lr_{format(config['limu_finetune']['lr'], '.10f').rstrip('0').rstrip('.')}_"
                               f"d_hidden_{config['limu_model']['d_hidden']}_d_ff_{config['limu_model']['d_ff']}_"
@@ -389,7 +398,10 @@ def full_supervise_train_limu_model(model, loss, optimizer, train_set, val_set, 
     path = os.path.join(path, f"fully_supervised")
     os.makedirs(path, exist_ok=True)
 
-    path = os.path.join(path, f"window_size_{format(config['general']['window_size'] / 30, '.0f').rstrip('0').rstrip('.')}sec")
+    path = os.path.join(path, f"window_size_{int(config['general']['window_size'] / 30)}sec")
+    os.makedirs(path, exist_ok=True)
+
+    path = os.path.join(path, f"feat_dim_{int(config['general']['feat_dim'])}")
     os.makedirs(path, exist_ok=True)
 
     path = os.path.join(path, f"epoch_{config['limu_finetune']['epoch']}_"

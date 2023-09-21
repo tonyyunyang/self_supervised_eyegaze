@@ -27,6 +27,7 @@ def main():
         num_classes = len(encoder.classes_)
         feat_dim = data[0].shape[1]
         labels_dim = labels.shape
+        config["general"]["feat_dim"] = feat_dim
         print(f"The number of classes is {num_classes}, the feat_dim is {feat_dim}, the labels_dim is {labels_dim}")
 
         eyegaze_data_loader = (prepare_mixed_data_loader
@@ -40,6 +41,7 @@ def main():
 
         num_classes = len(encoder.classes_)
         feat_dim = train_data[0].shape[1]
+        config["general"]["feat_dim"] = feat_dim
         print(f"The number of classes is {num_classes}, the feat_dim is {feat_dim}")
 
         eyegaze_data_loader = (prepare_one_out_data_loader
@@ -50,29 +52,29 @@ def main():
         print("Either Mixed / One_out")
         sys.exit()
 
-    # # ==================================================================================================================
-    # # If the pretrain_model path is not provided, start with pretraining the model
-    # if config["general"]["pretrain_model"] is None:
-    #     hyperparameters = KDD_Pretrain_Hyperparameters(config)
-    #     model = kdd_model4pretrain(config, feat_dim)
-    #     loss = hyperparameters.loss
-    #     optimizer = hyperparameters.optimizer(model.parameters(), hyperparameters.lr,
-    #                                           weight_decay=hyperparameters.weight_decay)
-    #
-    #     pretrain_kdd_model(model, loss, optimizer, eyegaze_data_loader[0], config)
-    #
-    # # If the pretrain_model path is provided, meaning that there is already a pretrained model, then directly finetune
-    # # After pretrain, finetune will be performed automatically, because the pretrain_model will be filled
-    # hyperparameters = KDD_Finetune_Hyperparameters(config)
-    # model = kdd_model4finetune(config, feat_dim, num_classes)
-    # loss = hyperparameters.loss
-    # optimizer = hyperparameters.optimizer(model.parameters(), hyperparameters.lr,
-    #                                       weight_decay=hyperparameters.weight_decay)
-    #
-    # # eyegaze_data_loader[1] is the training set, and eyegaze_data_loader[2] is the validation set
-    # finetune_kdd_model(model, loss, optimizer, eyegaze_data_loader[1], eyegaze_data_loader[2], config)
-    #
-    # eval_finetune_kdd_model(model, eyegaze_data_loader[3], config, encoder)
+    # ==================================================================================================================
+    # If the pretrain_model path is not provided, start with pretraining the model
+    if config["general"]["pretrain_model"] is None:
+        hyperparameters = KDD_Pretrain_Hyperparameters(config)
+        model = kdd_model4pretrain(config, feat_dim)
+        loss = hyperparameters.loss
+        optimizer = hyperparameters.optimizer(model.parameters(), hyperparameters.lr,
+                                              weight_decay=hyperparameters.weight_decay)
+
+        pretrain_kdd_model(model, loss, optimizer, eyegaze_data_loader[0], config)
+
+    # If the pretrain_model path is provided, meaning that there is already a pretrained model, then directly finetune
+    # After pretrain, finetune will be performed automatically, because the pretrain_model will be filled
+    hyperparameters = KDD_Finetune_Hyperparameters(config)
+    model = kdd_model4finetune(config, feat_dim, num_classes)
+    loss = hyperparameters.loss
+    optimizer = hyperparameters.optimizer(model.parameters(), hyperparameters.lr,
+                                          weight_decay=hyperparameters.weight_decay)
+
+    # eyegaze_data_loader[1] is the training set, and eyegaze_data_loader[2] is the validation set
+    finetune_kdd_model(model, loss, optimizer, eyegaze_data_loader[1], eyegaze_data_loader[2], config)
+
+    eval_finetune_kdd_model(model, eyegaze_data_loader[3], config, encoder)
 
 
 if __name__ == "__main__":

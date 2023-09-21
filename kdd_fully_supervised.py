@@ -26,6 +26,7 @@ def main():
         num_classes = len(encoder.classes_)
         feat_dim = data[0].shape[1]
         labels_dim = labels.shape
+        config["general"]["feat_dim"] = feat_dim
         print(f"The number of classes is {num_classes}, the feat_dim is {feat_dim}, the labels_dim is {labels_dim}")
 
         eyegaze_data_loader = (prepare_mixed_data_loader
@@ -39,6 +40,7 @@ def main():
 
         num_classes = len(encoder.classes_)
         feat_dim = train_data[0].shape[1]
+        config["general"]["feat_dim"] = feat_dim
         print(f"The number of classes is {num_classes}, the feat_dim is {feat_dim}")
 
         eyegaze_data_loader = (prepare_one_out_data_loader

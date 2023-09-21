@@ -3,6 +3,7 @@
     "test_mode": "One_out",
     "window_size": 900,
     "overlap": 0.98,
+    "feat_dim": null,
     "pretrain_model": null,
     "finetune_model": null,
     "batch_size": 128,
@@ -10,7 +11,7 @@
   },
 
   "kdd_pretrain": {
-    "epoch": 5,
+    "epoch": 500,
     "lr": 0.0001,
     "optimizer": "RAdam",
     "weight_decay": null,
@@ -18,7 +19,7 @@
   },
 
   "kdd_finetune": {
-    "epoch": 5,
+    "epoch": 2000,
     "lr": 0.00001,
     "optimizer": "RAdam",
     "weight_decay": null

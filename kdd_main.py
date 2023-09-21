@@ -16,7 +16,7 @@ def main():
         config = json.load(file)
     print(config)
 
-    config["general"]["pretrain_model"] = "results/kdd_model/One_out/linear/pretrain/window_size_30sec/freeze_False_epoch_500_lr_0.0001_d_hidden_64_d_ff_256_n_heads_8_n_layer_1_pos_encode_learnable_activation_gelu_norm_BatchNorm"
+    # config["general"]["pretrain_model"] = "results/kdd_model/One_out/linear/pretrain/window_size_30sec/freeze_False_epoch_500_lr_0.0001_d_hidden_64_d_ff_256_n_heads_8_n_layer_1_pos_encode_learnable_activation_gelu_norm_BatchNorm"
 
     # First load the data into dataloader according to chosen test_mode: Mixed or One_out
     if config["general"]["test_mode"] == "Mixed":
@@ -25,6 +25,7 @@ def main():
 
         num_classes = len(encoder.classes_)
         feat_dim = data[0].shape[1]
+        config["general"]["feat_dim"] = feat_dim
         labels_dim = labels.shape
         print(f"The number of classes is {num_classes}, the feat_dim is {feat_dim}, the labels_dim is {labels_dim}")
 
@@ -39,6 +40,7 @@ def main():
 
         num_classes = len(encoder.classes_)
         feat_dim = train_data[0].shape[1]
+        config["general"]["feat_dim"] = feat_dim
         print(f"The number of classes is {num_classes}, the feat_dim is {feat_dim}")
 
         eyegaze_data_loader = (prepare_one_out_data_loader
