@@ -1,0 +1,83 @@
+{
+  "general": {
+    "test_mode": "One_out",
+    "window_size": 900,
+    "overlap": 0.98,
+    "feat_dim": null,
+    "pretrain_model": null,
+    "finetune_model": null,
+    "batch_size": 128,
+    "freeze": false
+  },
+
+  "kdd_pretrain": {
+    "epoch": 500,
+    "lr": 0.0001,
+    "optimizer": "RAdam",
+    "weight_decay": null,
+    "harden": false
+  },
+
+  "kdd_finetune": {
+    "epoch": 2000,
+    "lr": 0.00001,
+    "optimizer": "RAdam",
+    "weight_decay": null
+  },
+
+  "limu_pretrain": {
+    "epoch": 10,
+    "lr": 0.001,
+    "optimizer": "Adam",
+    "weight_decay": null,
+    "harden": false
+  },
+
+  "limu_finetune": {
+    "epoch": 10,
+    "lr": 0.001,
+    "optimizer": "Adam",
+    "weight_decay": null,
+    "classifier": "gru"
+  },
+
+  "limu_mask": {
+    "mask_ratio": 0.15,
+    "mask_alpha": 6,
+    "max_gram": 10,
+    "mask_prob": 0.8,
+    "replace_prob": 0.0
+  },
+
+  "kdd_model": {
+    "d_hidden": 64,
+    "d_ff": 256,
+    "n_heads": 8,
+    "n_layers": 1,
+    "dropout": 0.1,
+    "pos_encoding": "learnable",
+    "activation": "gelu",
+    "norm": "BatchNorm",
+    "projection": "linear"
+  },
+
+  "limu_model": {
+    "d_hidden": 24,
+    "d_ff": 72,
+    "n_heads": 4,
+    "n_layers": 4,
+    "emb_norm": false
+  },
+
+  "limu_classifier": {
+    "gru_v1": {
+      "rnn_layers": [2, 1],
+      "rnn_io": [[72, 20],[20, 10]],
+      "linear_io": [[10, 6]],
+      "activ": false,
+      "dropout": false
+    }
+
+  }
+
+}
