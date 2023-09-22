@@ -1,7 +1,7 @@
 {
   "general": {
     "test_mode": "One_out",
-    "window_size": 900,
+    "window_size": 150,
     "overlap": 0.98,
     "feat_dim": null,
     "pretrain_model": null,
@@ -20,7 +20,7 @@
 
   "kdd_finetune": {
     "epoch": 2000,
-    "lr": 0.00001,
+    "lr": 0.0001,
     "optimizer": "RAdam",
     "weight_decay": null
   },
