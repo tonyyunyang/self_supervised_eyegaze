@@ -25,7 +25,10 @@ def pretrain_kdd_model(model, loss, optimizer, pretrain_data, config):
           f"=====================Training via {device}===================\n"
           f"=============================================================")
 
-    path = os.path.join("results", f"kdd_model")
+    path = os.path.join("results", f"{config['general']['test_set']}")
+    os.makedirs(path, exist_ok=True)
+
+    path = os.path.join(path, f"kdd_model")
     os.makedirs(path, exist_ok=True)
 
     path = os.path.join(path, f"{config['general']['test_mode']}")
@@ -177,7 +180,10 @@ def pretrain_limu_model(model, loss, optimizer, pretrain_data, config):
           f"=====================Training via {device}===================\n"
           f"=============================================================")
 
-    path = os.path.join("results", f"limu_model")
+    path = os.path.join("results", f"{config['general']['test_set']}")
+    os.makedirs(path, exist_ok=True)
+
+    path = os.path.join(path, f"limu_model")
     os.makedirs(path, exist_ok=True)
 
     path = os.path.join(path, f"{config['general']['test_mode']}")

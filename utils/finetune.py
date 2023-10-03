@@ -20,7 +20,10 @@ def finetune_kdd_model(model, loss, optimizer, train_set, val_set, config):
           f"=====================Training via {device}===================\n"
           f"=============================================================")
 
-    path = os.path.join("results", f"kdd_model")
+    path = os.path.join("results", f"{config['general']['test_set']}")
+    os.makedirs(path, exist_ok=True)
+
+    path = os.path.join(path, f"kdd_model")
     os.makedirs(path, exist_ok=True)
 
     path = os.path.join(path, f"{config['general']['test_mode']}")
@@ -100,7 +103,10 @@ def full_supervise_train_kdd_model(model, loss, optimizer, train_set, val_set, c
           f"=====================Training via {device}===================\n"
           f"=============================================================")
 
-    path = os.path.join("results", f"kdd_model")
+    path = os.path.join("results", f"{config['general']['test_set']}")
+    os.makedirs(path, exist_ok=True)
+
+    path = os.path.join(path, f"kdd_model")
     os.makedirs(path, exist_ok=True)
 
     path = os.path.join(path, f"{config['general']['test_mode']}")
@@ -313,7 +319,10 @@ def finetune_limu_model(model, loss, optimizer, train_set, val_set, config):
           f"=====================Training via {device}===================\n"
           f"=============================================================")
 
-    path = os.path.join("results", f"limu_model")
+    path = os.path.join("results", f"{config['general']['test_set']}")
+    os.makedirs(path, exist_ok=True)
+
+    path = os.path.join(path, f"limu_model")
     os.makedirs(path, exist_ok=True)
 
     path = os.path.join(path, f"{config['general']['test_mode']}")
@@ -389,7 +398,10 @@ def full_supervise_train_limu_model(model, loss, optimizer, train_set, val_set, 
           f"=====================Training via {device}===================\n"
           f"=============================================================")
 
-    path = os.path.join("results", f"limu_model")
+    path = os.path.join("results", f"{config['general']['test_set']}")
+    os.makedirs(path, exist_ok=True)
+
+    path = os.path.join(path, f"limu_model")
     os.makedirs(path, exist_ok=True)
 
     path = os.path.join(path, f"{config['general']['test_mode']}")

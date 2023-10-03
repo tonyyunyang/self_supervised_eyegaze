@@ -1,5 +1,6 @@
 {
   "general": {
+    "test_set": "Desktop",
     "test_mode": "One_out",
     "window_size": 150,
     "overlap": 0.98,
@@ -11,7 +12,7 @@
   },
 
   "kdd_pretrain": {
-    "epoch": 500,
+    "epoch": 5,
     "lr": 0.0001,
     "optimizer": "RAdam",
     "weight_decay": null,
@@ -19,7 +20,7 @@
   },
 
   "kdd_finetune": {
-    "epoch": 2000,
+    "epoch": 5,
     "lr": 0.0001,
     "optimizer": "RAdam",
     "weight_decay": null

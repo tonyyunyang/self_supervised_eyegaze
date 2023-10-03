@@ -11,6 +11,7 @@ from utils.pretrain import pretrain_kdd_model
 
 
 def main():
+    # DIFFERENCE means that in this model, 4 features are passed in, the original data + self defined difference feature
     # PLEASE DO NOT USE MIXED TEST MODE IN THIS FILE, THE DIFFERENCE LOADER IS NOT IMPLEMENTED FOR MIX, AND IT WILL ALSO NOT BE.
     # Load the config from JSON file first
     with open("utils/config.json", "r") as file:
