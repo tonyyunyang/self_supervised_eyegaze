@@ -125,14 +125,14 @@ def load_tight_one_out_data(window_size, overlap, data_set):
                 split_idx = int(0.1 * len(df))
 
                 # First 10% for test_train_data
-                for i in range(0, split_idx - window_size + 1, step_size):
+                for i in range(0, split_idx - window_size + 1, 1):
                     window = df.iloc[i:i + window_size]
                     test_train_data.append(window)
                     test_train_labels.append(label)
                     # print("++++++++++++++++++++")
 
                 # Remaining 90% for test_test_data
-                for i in range(split_idx, len(df) - window_size + 1, step_size):
+                for i in range(split_idx, len(df) - window_size + 1, 1):
                     window = df.iloc[i:i + window_size]
                     test_test_data.append(window)
                     test_test_labels.append(label)
