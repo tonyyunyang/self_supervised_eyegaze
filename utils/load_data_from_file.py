@@ -88,6 +88,66 @@ def load_one_out_data(window_size, overlap, data_set):
     return np.array(train_data), np.array(encoded_train_labels), np.array(test_data), np.array(encoded_test_labels), encoder
 
 
+def load_tight_one_out_data(window_size, overlap, data_set):
+    if data_set == "Desktop":
+        directory = "data/DesktopActivity/ALL"
+        leave_out_sample = "P08"
+    elif data_set == "Reading":
+        directory = "data/ReadingActivity"
+        leave_out_sample = "P09"
+    else:
+        sys.exit()
+
+    step_size = int(window_size * (1 - overlap))
+
+    print(f"The step size of each sample is {step_size}, this is determined via the overlap")
+
+    train_data = []
+    train_labels = []
+    test_train_data = []
+    test_train_labels = []
+    test_test_data = []
+    test_test_labels = []
+
+    for filename in os.listdir(directory):
+        if filename.endswith(".csv"):
+            label = filename.split("_")[1].split(".")[0]
+            df = pd.read_csv(os.path.join(directory, filename), header=None)
+
+            if not filename.startswith(leave_out_sample):
+                for i in range(0, len(df) - window_size + 1, step_size):
+                    window = df.iloc[i:i + window_size]
+
+                    train_data.append(window)
+                    train_labels.append(label)
+            elif filename.startswith(leave_out_sample):
+                # if the file to be read is in the leave one out sample, I divide the data in the file into two parts, the first part is 10% of the data in the file, and the other part is the rest 90% in the set.
+                split_idx = int(0.1 * len(df))
+
+                # First 10% for test_train_data
+                for i in range(0, split_idx - window_size + 1, step_size):
+                    window = df.iloc[i:i + window_size]
+                    test_train_data.append(window)
+                    test_train_labels.append(label)
+                    # print("++++++++++++++++++++")
+
+                # Remaining 90% for test_test_data
+                for i in range(split_idx, len(df) - window_size + 1, step_size):
+                    window = df.iloc[i:i + window_size]
+                    test_test_data.append(window)
+                    test_test_labels.append(label)
+                    # print("==========================")
+
+
+    encoder = LabelEncoder()
+    encoded_train_labels = encoder.fit_transform(train_labels)
+    encoded_test_train_labels = encoder.transform(test_train_labels)
+    encoded_test_test_labels = encoder.transform(test_test_labels)
+    print_encoded_classes(encoder)
+
+    return np.array(train_data), np.array(encoded_train_labels), np.array(test_train_data), np.array(encoded_test_train_labels), np.array(test_test_data), np.array(encoded_test_test_labels), encoder
+
+
 def load_one_out_data_with_difference(window_size, overlap, data_set):
     if data_set == "Desktop":
         directory = "data/DesktopActivity/ALL"
@@ -241,18 +301,17 @@ def prepare_one_out_data_loader(train_data, train_labels, test_data, test_labels
     return pretrain_loader, finetune_train_loader, finetune_val_loader, test_loader
 
 
-def prepare_tight_one_out_data_loader(train_data, train_labels, test_data, test_labels, batch_size, max_len):
+def prepare_tight_one_out_data_loader(train_data, train_labels, test_train_data, test_train_labels, test_test_data, test_test_labels, batch_size, max_len):
     # Get the range of the indices for pretrain, fine tune and testing data
     pretrain_indices = np.arange(len(train_data))
-    finetune_test_indices = list(range(len(test_data)))
+    finetune_indices = list(range(len(test_train_data)))
+    test_indices = list(range(len(test_test_data)))
 
-    # Split the indices for finetune and testing
-    test_indices, finetune_indices = train_test_split(finetune_test_indices, test_size=0.1, random_state=11, shuffle=True)
     # Split the finetune data into training and validation
     finetune_train_indices, finetune_val_indices = train_test_split(finetune_indices, test_size=0.3, random_state=11, shuffle=True)
 
     # Retrieve the labels for the finetune training set
-    finetune_train_labels = [test_labels[i] for i in finetune_train_indices]
+    finetune_train_labels = [test_train_labels[i] for i in finetune_train_indices]
 
     # Count the occurrences of each label
     label_counts = Counter(finetune_train_labels)
@@ -265,9 +324,9 @@ def prepare_tight_one_out_data_loader(train_data, train_labels, test_data, test_
         print(f"Label {label}: {count} samples")
 
     pretrain_imputation_dataset = ImputationDataset(train_data, pretrain_indices, mean_mask_length=3, masking_ratio=0.15)
-    finetune_train_classification_dataset = ClassiregressionDataset(test_data, test_labels, finetune_train_indices)
-    finetune_val_classification_dataset = ClassiregressionDataset(test_data, test_labels, finetune_val_indices)
-    test_classification_dataset = ClassiregressionDataset(test_data, test_labels, test_indices)
+    finetune_train_classification_dataset = ClassiregressionDataset(test_train_data, test_train_labels, finetune_train_indices)
+    finetune_val_classification_dataset = ClassiregressionDataset(test_train_data, test_train_labels, finetune_val_indices)
+    test_classification_dataset = ClassiregressionDataset(test_test_data, test_test_labels, test_indices)
 
     pretrain_loader = (DataLoader
                        (dataset=pretrain_imputation_dataset, batch_size=batch_size, shuffle=True,

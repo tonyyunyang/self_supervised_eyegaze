@@ -1,13 +1,13 @@
 {
   "general": {
-    "test_set": "Desktop",
+    "test_set": "Reading",
     "test_mode": "One_out",
-    "window_size": 150,
-    "overlap": 0.8,
+    "window_size": 900,
+    "overlap": 0.998,
     "feat_dim": null,
     "pretrain_model": null,
     "finetune_model": null,
-    "batch_size": 128,
+    "batch_size": 32,
     "freeze": false
   },
 
@@ -54,7 +54,7 @@
     "d_hidden": 64,
     "d_ff": 256,
     "n_heads": 8,
-    "n_layers": 1,
+    "n_layers": 3,
     "dropout": 0.1,
     "pos_encoding": "learnable",
     "activation": "gelu",

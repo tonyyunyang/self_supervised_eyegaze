@@ -6,7 +6,8 @@ from modules.kdd_model import kdd_model4pretrain, kdd_model4finetune
 from modules.pretrain_hyperparameters import KDD_Pretrain_Hyperparameters
 from utils.finetune import finetune_kdd_model, eval_finetune_kdd_model
 from utils.load_data_from_file import load_mixed_data, prepare_mixed_data_loader, load_one_out_data, \
-    prepare_one_out_data_loader, load_one_out_data_with_difference, prepare_tight_one_out_data_loader
+    prepare_one_out_data_loader, load_one_out_data_with_difference, load_tight_one_out_data, \
+    prepare_tight_one_out_data_loader
 from utils.pretrain import pretrain_kdd_model
 
 
@@ -38,7 +39,7 @@ def main():
                                 max_len=config["general"]["window_size"]))
 
     elif config["general"]["test_mode"] == "One_out":
-        train_data, train_labels, test_data, test_labels, encoder = (load_one_out_data
+        train_data, train_labels, test_train_data, test_train_labels, test_test_data, test_test_labels, encoder = (load_tight_one_out_data
                                                                      (window_size=config["general"]["window_size"],
                                                                       overlap=config["general"]["overlap"],
                                                                       data_set=config["general"]["test_set"]))
@@ -49,7 +50,7 @@ def main():
         print(f"The number of classes is {num_classes}, the feat_dim is {feat_dim}")
 
         eyegaze_data_loader = (prepare_tight_one_out_data_loader
-                               (train_data, train_labels, test_data, test_labels,
+                               (train_data, train_labels, test_train_data, test_train_labels, test_test_data, test_test_labels,
                                 batch_size=config["general"]["batch_size"],
                                 max_len=config["general"]["window_size"]))
     else:
