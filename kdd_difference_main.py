@@ -23,7 +23,8 @@ def main():
     # First load the data into dataloader according to chosen test_mode: Mixed or One_out
     if config["general"]["test_mode"] == "Mixed":
         data, labels, encoder = load_mixed_data(window_size=config["general"]["window_size"],
-                                                overlap=config["general"]["overlap"])
+                                                overlap=config["general"]["overlap"],
+                                                data_set=config["general"]["test_set"])
 
         num_classes = len(encoder.classes_)
         feat_dim = data[0].shape[1]
@@ -38,7 +39,8 @@ def main():
     elif config["general"]["test_mode"] == "One_out":
         train_data, train_labels, test_data, test_labels, encoder = (load_one_out_data_with_difference
                                                                      (window_size=config["general"]["window_size"],
-                                                                      overlap=config["general"]["overlap"]))
+                                                                      overlap=config["general"]["overlap"],
+                                                                      data_set=config["general"]["test_set"]))
 
         num_classes = len(encoder.classes_)
         feat_dim = train_data[0].shape[1]

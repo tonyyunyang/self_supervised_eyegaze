@@ -6,21 +6,20 @@ from modules.kdd_model import kdd_model4pretrain, kdd_model4finetune
 from modules.pretrain_hyperparameters import KDD_Pretrain_Hyperparameters
 from utils.finetune import finetune_kdd_model, eval_finetune_kdd_model
 from utils.load_data_from_file import load_mixed_data, prepare_mixed_data_loader, load_one_out_data, \
-    prepare_one_out_data_loader
+    prepare_one_out_data_loader, load_one_out_data_with_difference, prepare_tight_one_out_data_loader
 from utils.pretrain import pretrain_kdd_model
 
 
 def main():
+    # TIGHT means that, when running this mode, we will be using a very small overlap for both pretrain and finetune
+    # In this case, in order to distinguish between samples. During finetune, only the first 10% of the data are used for finetune, and the next 90% of the data are used for testing.
+    # PLEASE DO NOT USE MIXED TEST MODE IN THIS FILE, THE DIFFERENCE LOADER IS NOT IMPLEMENTED FOR MIX, AND IT WILL ALSO NOT BE.
     # Load the config from JSON file first
     with open("utils/config.json", "r") as file:
         config = json.load(file)
     print(config)
 
-    # config["general"]["pretrain_model"] = "results/kdd_model/One_out/linear/pretrain/window_size_5sec/feat_dim_2/freeze_False_epoch_5000_lr_0.0001_d_hidden_64_d_ff_256_n_heads_8_n_layer_1_pos_encode_learnable_activation_gelu_norm_BatchNorm"
-
-    # config["general"]["overlap"] = 0.99
-
-    # config["kdd_finetune"]["epoch"] = 600
+    # config["general"]["pretrain_model"] = "results/kdd_model/One_out/linear/pretrain/window_size_30sec/freeze_False_epoch_500_lr_0.0001_d_hidden_64_d_ff_256_n_heads_8_n_layer_1_pos_encode_learnable_activation_gelu_norm_BatchNorm"
 
     # First load the data into dataloader according to chosen test_mode: Mixed or One_out
     if config["general"]["test_mode"] == "Mixed":
@@ -30,8 +29,8 @@ def main():
 
         num_classes = len(encoder.classes_)
         feat_dim = data[0].shape[1]
-        config["general"]["feat_dim"] = feat_dim
         labels_dim = labels.shape
+        config["general"]["feat_dim"] = feat_dim
         print(f"The number of classes is {num_classes}, the feat_dim is {feat_dim}, the labels_dim is {labels_dim}")
 
         eyegaze_data_loader = (prepare_mixed_data_loader
@@ -49,7 +48,7 @@ def main():
         config["general"]["feat_dim"] = feat_dim
         print(f"The number of classes is {num_classes}, the feat_dim is {feat_dim}")
 
-        eyegaze_data_loader = (prepare_one_out_data_loader
+        eyegaze_data_loader = (prepare_tight_one_out_data_loader
                                (train_data, train_labels, test_data, test_labels,
                                 batch_size=config["general"]["batch_size"],
                                 max_len=config["general"]["window_size"]))
