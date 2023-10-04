@@ -221,21 +221,31 @@ def load_one_out_data_with_fourier(window_size, overlap, data_set):
             label = filename.split("_")[1].split(".")[0]
             df = pd.read_csv(os.path.join(directory, filename), header=None)
 
-            for i in range(0, len(df) - window_size + 1, step_size):
-                window = df.iloc[i:i + window_size].values
+            if not filename.startswith(leave_out_sample):
+                for i in range(0, len(df) - window_size + 1, step_size):
+                    window = df.iloc[i:i + window_size].values
 
-                # Compute the Fourier transform for the window
-                fourier_window = np.fft.fft(window, axis=0).real
+                    # Compute the Fourier transform for the window
+                    fourier_window = np.fft.fft(window, axis=0).real
 
-                # Combine the original window and the Fourier transform window
-                combined_window = np.concatenate([window, fourier_window], axis=1)
+                    # Combine the original window and the Fourier transform window
+                    combined_window = np.concatenate([window, fourier_window], axis=1)
 
-                if filename.startswith(leave_out_sample):
-                    test_data.append(combined_window)
-                    test_labels.append(label)
-                else:
                     train_data.append(combined_window)
                     train_labels.append(label)
+
+            elif filename.startswith(leave_out_sample):
+                for i in range(0, len(df) - window_size + 1, 1):
+                    window = df.iloc[i:i + window_size].values
+
+                    # Compute the Fourier transform for the window
+                    fourier_window = np.fft.fft(window, axis=0).real
+
+                    # Combine the original window and the Fourier transform window
+                    combined_window = np.concatenate([window, fourier_window], axis=1)
+
+                    test_data.append(combined_window)
+                    test_labels.append(label)
 
     encoder = LabelEncoder()
     encoded_train_labels = encoder.fit_transform(train_labels)
