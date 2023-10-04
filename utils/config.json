@@ -1,6 +1,6 @@
 {
   "general": {
-    "test_set": "Reading",
+    "test_set": "Desktop",
     "test_mode": "One_out",
     "window_size": 900,
     "overlap": 0.9,
