@@ -10,6 +10,27 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/data/DesktopActivity/ALL/P08_PLAY.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/data/DesktopActivity/ALL/P08_READ.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/data/DesktopActivity/ALL/P08_SEARCH.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/data/DesktopActivity/P1/P01_WRITE.csv">
           <value>
             <Attribute>

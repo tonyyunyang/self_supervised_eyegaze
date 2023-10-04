@@ -296,7 +296,7 @@ def load_tight_one_out_data_with_fourier(window_size, overlap, data_set):
 
             elif filename.startswith(leave_out_sample):
                 # if the file to be read is in the leave one out sample, I divide the data in the file into two parts, the first part is 10% of the data in the file, and the other part is the rest 90% in the set.
-                split_idx = int(0.1 * len(df))
+                split_idx = int(0.15 * len(df))
 
                 for i in range(0, split_idx - window_size + 1, 1):
                     window = df.iloc[i:i + window_size].values
