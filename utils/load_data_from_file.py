@@ -255,6 +255,82 @@ def load_one_out_data_with_fourier(window_size, overlap, data_set):
     return np.array(train_data), np.array(encoded_train_labels), np.array(test_data), np.array(encoded_test_labels), encoder
 
 
+def load_tight_one_out_data_with_fourier(window_size, overlap, data_set):
+    if data_set == "Desktop":
+        directory = "data/DesktopActivity/ALL"
+        leave_out_sample = "P08"
+    elif data_set == "Reading":
+        directory = "data/ReadingActivity"
+        leave_out_sample = "P09"
+    else:
+        sys.exit()
+
+    step_size = int(window_size * (1 - overlap))
+
+    print(f"The step size of each sample is {step_size}, this is determined via the overlap")
+
+    train_data = []
+    train_labels = []
+    test_train_data = []
+    test_train_labels = []
+    test_test_data = []
+    test_test_labels = []
+
+    for filename in os.listdir(directory):
+        if filename.endswith(".csv"):
+            label = filename.split("_")[1].split(".")[0]
+            df = pd.read_csv(os.path.join(directory, filename), header=None)
+
+            if not filename.startswith(leave_out_sample):
+                for i in range(0, len(df) - window_size + 1, step_size):
+                    window = df.iloc[i:i + window_size].values
+
+                    # Compute the Fourier transform for the window
+                    fourier_window = np.fft.fft(window, axis=0).real
+
+                    # Combine the original window and the Fourier transform window
+                    combined_window = np.concatenate([window, fourier_window], axis=1)
+
+                    train_data.append(combined_window)
+                    train_labels.append(label)
+
+            elif filename.startswith(leave_out_sample):
+                # if the file to be read is in the leave one out sample, I divide the data in the file into two parts, the first part is 10% of the data in the file, and the other part is the rest 90% in the set.
+                split_idx = int(0.1 * len(df))
+
+                for i in range(0, split_idx - window_size + 1, 1):
+                    window = df.iloc[i:i + window_size].values
+
+                    # Compute the Fourier transform for the window
+                    fourier_window = np.fft.fft(window, axis=0).real
+
+                    # Combine the original window and the Fourier transform window
+                    combined_window = np.concatenate([window, fourier_window], axis=1)
+
+                    test_train_data.append(combined_window)
+                    test_train_labels.append(label)
+
+                for i in range(split_idx, len(df) - window_size + 1, 1):
+                    window = df.iloc[i:i + window_size].values
+
+                    # Compute the Fourier transform for the window
+                    fourier_window = np.fft.fft(window, axis=0).real
+
+                    # Combine the original window and the Fourier transform window
+                    combined_window = np.concatenate([window, fourier_window], axis=1)
+
+                    test_test_data.append(combined_window)
+                    test_test_labels.append(label)
+
+    encoder = LabelEncoder()
+    encoded_train_labels = encoder.fit_transform(train_labels)
+    encoded_test_train_labels = encoder.transform(test_train_labels)
+    encoded_test_test_labels = encoder.transform(test_test_labels)
+    print_encoded_classes(encoder)
+
+    return np.array(train_data), np.array(encoded_train_labels), np.array(test_train_data), np.array(encoded_test_train_labels), np.array(test_test_data), np.array(encoded_test_test_labels), encoder
+
+
 def prepare_mixed_data_loader(data, labels, batch_size, max_len):
     # Get the range of indices for the data
     indices = list(range(len(data)))

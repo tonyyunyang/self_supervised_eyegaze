@@ -39,10 +39,11 @@ def main():
                                 max_len=config["general"]["window_size"]))
 
     elif config["general"]["test_mode"] == "One_out":
-        train_data, train_labels, test_train_data, test_train_labels, test_test_data, test_test_labels, encoder = (load_tight_one_out_data
-                                                                     (window_size=config["general"]["window_size"],
-                                                                      overlap=config["general"]["overlap"],
-                                                                      data_set=config["general"]["test_set"]))
+        train_data, train_labels, test_train_data, test_train_labels, test_test_data, test_test_labels, encoder = (
+            load_tight_one_out_data
+            (window_size=config["general"]["window_size"],
+             overlap=config["general"]["overlap"],
+             data_set=config["general"]["test_set"]))
 
         num_classes = len(encoder.classes_)
         feat_dim = train_data[0].shape[1]
@@ -50,7 +51,8 @@ def main():
         print(f"The number of classes is {num_classes}, the feat_dim is {feat_dim}")
 
         eyegaze_data_loader = (prepare_tight_one_out_data_loader
-                               (train_data, train_labels, test_train_data, test_train_labels, test_test_data, test_test_labels,
+                               (train_data, train_labels, test_train_data, test_train_labels, test_test_data,
+                                test_test_labels,
                                 batch_size=config["general"]["batch_size"],
                                 max_len=config["general"]["window_size"]))
     else:
