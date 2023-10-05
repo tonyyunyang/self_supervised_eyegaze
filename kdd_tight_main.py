@@ -24,8 +24,8 @@ def main():
 
     config["general"]["test_set"] = "Reading" # Reading or Desktop
 
-    config["general"]["window_size"] = 900
-    config["general"]["overlap"] = 0.944
+    config["general"]["window_size"] = 150
+    config["general"]["overlap"] = 0.899
     config["general"]["batch_size"] = 128
     config["kdd_pretrain"]["epoch"] = 200
     config["kdd_finetune"]["epoch"] = 600
