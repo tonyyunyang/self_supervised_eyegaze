@@ -27,7 +27,7 @@ def main():
     config["general"]["window_size"] = 150
     config["general"]["overlap"] = 0.899
     config["general"]["batch_size"] = 128
-    config["kdd_pretrain"]["epoch"] = 200
+    config["kdd_pretrain"]["epoch"] = 700
     config["kdd_finetune"]["epoch"] = 600
 
     config["kdd_model"]["d_hidden"] = 64
