@@ -9,7 +9,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
 from modules.dataset import ImputationDataset, ClassiregressionDataset, collate_unsuperv, collate_superv, \
-    LIBERTDataset4Pretrain, Preprocess4Mask
+    LIBERTDataset4Pretrain, Preprocess4Mask, NoMaskImputationDataset
 from torch.utils.data import DataLoader
 
 
@@ -417,6 +417,49 @@ def prepare_one_out_data_loader(train_data, train_labels, test_data, test_labels
         print(f"Label {label}: {count} samples")
 
     pretrain_imputation_dataset = ImputationDataset(train_data, pretrain_indices, mean_mask_length=3, masking_ratio=0.15)
+    finetune_train_classification_dataset = ClassiregressionDataset(test_data, test_labels, finetune_train_indices)
+    finetune_val_classification_dataset = ClassiregressionDataset(test_data, test_labels, finetune_val_indices)
+    test_classification_dataset = ClassiregressionDataset(test_data, test_labels, test_indices)
+
+    pretrain_loader = (DataLoader
+                       (dataset=pretrain_imputation_dataset, batch_size=batch_size, shuffle=True,
+                        collate_fn=lambda x: collate_unsuperv(x, max_len=max_len)))
+    finetune_train_loader = (DataLoader
+                             (dataset=finetune_train_classification_dataset, batch_size=batch_size, shuffle=True,
+                              collate_fn=lambda x: collate_superv(x, max_len=max_len)))
+    finetune_val_loader = (DataLoader
+                           (dataset=finetune_val_classification_dataset, batch_size=batch_size, shuffle=False,
+                            collate_fn=lambda x: collate_superv(x, max_len=max_len)))
+    test_loader = DataLoader(dataset=test_classification_dataset, batch_size=batch_size, shuffle=False,
+                             collate_fn=lambda x: collate_superv(x, max_len=max_len))
+
+    return pretrain_loader, finetune_train_loader, finetune_val_loader, test_loader
+
+
+def prepare_no_mask_one_out_data_loader(train_data, train_labels, test_data, test_labels, batch_size, max_len):
+    # Get the range of the indices for pretrain, fine tune and testing data
+    pretrain_indices = np.arange(len(train_data))
+    finetune_test_indices = list(range(len(test_data)))
+
+    # Split the indices for finetune and testing
+    test_indices, finetune_indices = train_test_split(finetune_test_indices, test_size=0.1, random_state=11, shuffle=True)
+    # Split the finetune data into training and validation
+    finetune_train_indices, finetune_val_indices = train_test_split(finetune_indices, test_size=0.3, random_state=11, shuffle=True)
+
+    # Retrieve the labels for the finetune training set
+    finetune_train_labels = [test_labels[i] for i in finetune_train_indices]
+
+    # Count the occurrences of each label
+    label_counts = Counter(finetune_train_labels)
+
+    print(f"Pretrain samples amount: {len(pretrain_indices)}")
+    print(f"Finetune training samples amount: {len(finetune_train_indices)}")
+    print(f"Finetune validation samples amount: {len(finetune_val_indices)}")
+    print(f"Final testing samples amount: {len(test_indices)}")
+    for label, count in label_counts.items():
+        print(f"Label {label}: {count} samples")
+
+    pretrain_imputation_dataset = NoMaskImputationDataset(train_data, pretrain_indices)
     finetune_train_classification_dataset = ClassiregressionDataset(test_data, test_labels, finetune_train_indices)
     finetune_val_classification_dataset = ClassiregressionDataset(test_data, test_labels, finetune_val_indices)
     test_classification_dataset = ClassiregressionDataset(test_data, test_labels, test_indices)

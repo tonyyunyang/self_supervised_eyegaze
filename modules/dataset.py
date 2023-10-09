@@ -52,7 +52,103 @@ class ImputationDataset(Dataset):
         return data[indices]
 
 
+class NoMaskImputationDataset(Dataset):
+    """Dynamically computes missingness (noise) mask for each sample"""
+
+    def __init__(self, data, indices, mean_mask_length=0, masking_ratio=0,
+                 mode='separate', distribution='geometric', exclude_feats=None):
+        super(NoMaskImputationDataset, self).__init__()
+
+        self.data = data  # this is a subclass of the BaseData class in data.py
+        self.IDs = indices  # list of data IDs, but also mapping between integer index and ID
+        self.feature_data = self.get_feature_subset(self.data, self.IDs)
+        # self.feature_df = self.data.loc[self.IDs]
+
+        self.masking_ratio = masking_ratio
+        self.mean_mask_length = mean_mask_length
+        self.mode = mode
+        self.distribution = distribution
+        self.exclude_feats = exclude_feats
+
+    def __getitem__(self, ind):
+        """
+        For a given integer index, returns the corresponding (seq_length, feat_dim) array and a noise mask of same shape
+        Args:
+            ind: integer index of sample in dataset
+        Returns:
+            X: (seq_length, feat_dim) tensor of the multivariate time series corresponding to a sample
+            mask: (seq_length, feat_dim) boolean tensor: 0s mask and predict, 1s: unaffected input
+            ID: ID of sample
+        """
+
+        # X = self.feature_df.loc[self.IDs[ind]].values  # (seq_length, feat_dim) array
+        X = self.feature_data[ind]
+        # mask = noise_mask(X, self.masking_ratio, self.mean_mask_length, self.mode, self.distribution,
+        #                   self.exclude_feats)  # (seq_length, feat_dim) boolean array
+
+        # Create a mask of the same size as X but filled with 1s
+        # mask = torch.ones_like(torch.from_numpy(X), dtype=torch.bool)
+        mask = np.ones_like(X, dtype=np.bool_)
+
+        return torch.from_numpy(X), torch.from_numpy(mask), self.IDs[ind]
+
+    def update(self):
+        # in case this function is called by accident it does not change anything
+        self.mean_mask_length = 0
+        self.masking_ratio = 0
+
+    def __len__(self):
+        return len(self.IDs)
+
+    @staticmethod
+    def get_feature_subset(data, indices):
+        """Returns the subset of the data that corresponds to the specified indices."""
+        return data[indices]
+
+
 def collate_unsuperv(data, max_len=None, mask_compensation=False):
+    """Build mini-batch tensors from a list of (X, mask) tuples. Mask input. Create
+    Args:
+        data: len(batch_size) list of tuples (X, mask).
+            - X: torch tensor of shape (seq_length, feat_dim); variable seq_length.
+            - mask: boolean torch tensor of shape (seq_length, feat_dim); variable seq_length.
+        max_len: global fixed sequence length. Used for architectures requiring fixed length input,
+            where the batch length cannot vary dynamically. Longer sequences are clipped, shorter are padded with 0s
+    Returns:
+        X: (batch_size, padded_length, feat_dim) torch tensor of masked features (input)
+        targets: (batch_size, padded_length, feat_dim) torch tensor of unmasked features (output)
+        target_masks: (batch_size, padded_length, feat_dim) boolean torch tensor
+            0 indicates masked values to be predicted, 1 indicates unaffected/"active" feature values
+        padding_masks: (batch_size, padded_length) boolean tensor, 1 means keep vector at this position, 0 ignore (padding)
+    """
+
+    batch_size = len(data)
+    features, masks, IDs = zip(*data)
+
+    # Stack and pad features and masks (convert 2D to 3D tensors, i.e. add batch dimension)
+    lengths = [X.shape[0] for X in features]  # original sequence length for each time series
+    if max_len is None:
+        max_len = max(lengths)
+    X = torch.zeros(batch_size, max_len, features[0].shape[-1])  # (batch_size, padded_length, feat_dim)
+    target_masks = torch.zeros_like(X,
+                                    dtype=torch.bool)  # (batch_size, padded_length, feat_dim) masks related to objective
+    for i in range(batch_size):
+        end = min(lengths[i], max_len)
+        X[i, :end, :] = features[i][:end, :]
+        target_masks[i, :end, :] = masks[i][:end, :]
+
+    targets = X.clone()
+    X = X * target_masks  # mask input
+    if mask_compensation:
+        X = compensate_masking(X, target_masks)
+
+    padding_masks = padding_mask(torch.tensor(lengths, dtype=torch.int16),
+                                 max_len=max_len)  # (batch_size, padded_length) boolean tensor, "1" means keep
+    target_masks = ~target_masks  # inverse logic: 0 now means ignore, 1 means predict
+    return X, targets, target_masks, padding_masks, IDs
+
+
+def collate_unmask_unsuperv(data, max_len=None, mask_compensation=False):
     """Build mini-batch tensors from a list of (X, mask) tuples. Mask input. Create
     Args:
         data: len(batch_size) list of tuples (X, mask).
