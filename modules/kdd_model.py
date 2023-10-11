@@ -43,6 +43,31 @@ def kdd_model4pretrain(config, feat_dim):
     return model
 
 
+def kdd_model4pretrain_dual_loss(config, feat_dim):
+    max_seq_len = config["general"]["window_size"]
+
+    model = TSTransformerEncoderDualLoss(
+        feat_dim,
+        max_seq_len,
+        config["kdd_model"]["d_hidden"],
+        config["kdd_model"]["n_heads"],
+        config["kdd_model"]["n_layers"],
+        config["kdd_model"]["d_ff"],
+        dropout=config["kdd_model"]["dropout"],
+        pos_encoding=config["kdd_model"]["pos_encoding"],
+        activation=config["kdd_model"]["activation"],
+        norm=config["kdd_model"]["norm"],
+        embedding=config["kdd_model"]["projection"],
+        freeze=config["general"]["freeze"],
+    )
+
+    print("Model:\n{}".format(model))
+    print("Total number of parameters: {}".format(count_parameters(model)))
+    print("Trainable parameters: {}".format(count_parameters(model, trainable=True)))
+
+    return model
+
+
 def kdd_model4finetune(config, feat_dim, num_classes):
     max_seq_len = config["general"]["window_size"]
 
@@ -356,6 +381,137 @@ class TSTransformerEncoder(nn.Module):
             sys.exit()
 
         return output
+
+
+class TSTransformerEncoderDualLoss(nn.Module):
+
+    def __init__(self, feat_dim, max_len, d_model, n_heads, num_layers, dim_feedforward, dropout=0.1,
+                 pos_encoding='fixed', activation='gelu', norm='BatchNorm', embedding='convolution', freeze=False):
+        super(TSTransformerEncoder, self).__init__()
+
+        self.max_len = max_len
+        self.d_model = d_model
+        self.n_heads = n_heads
+        self.embedding = embedding
+
+        # Below are configurations for the convolution layer
+        kernel_size = 10
+        stride = 2
+        dilation = 1
+        padding = 0
+
+        if self.embedding == "linear":
+            self.project_inp = nn.Linear(feat_dim, d_model)
+        elif self.embedding == "convolution":
+            # Calculate the output sequence size after the 1D Conv layer
+            conv_seq_length = int(floor((self.max_len + 2 * padding - dilation * (kernel_size - 1) - 1) / stride + 1))
+
+            self.project_inp = nn.Conv1d(feat_dim, d_model, kernel_size, stride, padding, dilation)
+            self.max_len = conv_seq_length
+        else:
+            print(f"Either linear / convolution")
+            sys.exit()
+
+        self.pos_enc = get_pos_encoder(pos_encoding)(d_model, dropout=dropout * (1.0 - freeze), max_len=self.max_len)
+
+        if norm == 'LayerNorm':
+            encoder_layer = TransformerEncoderLayer(d_model, self.n_heads, dim_feedforward, dropout * (1.0 - freeze),
+                                                    activation=activation)
+        else:
+            encoder_layer = TransformerBatchNormEncoderLayer(d_model, self.n_heads, dim_feedforward,
+                                                             dropout * (1.0 - freeze), activation=activation)
+
+        self.transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers)
+
+        if self.embedding == "linear":
+            self.output_layer = nn.Linear(d_model, feat_dim)
+        elif self.embedding == "convolution":
+            self.output_layer = nn.ConvTranspose1d(d_model, feat_dim, kernel_size=kernel_size, stride=stride,
+                                                   padding=padding, dilation=dilation)
+        else:
+            print(f"Either linear / convolution")
+            sys.exit()
+
+        self.act = _get_activation_fn(activation)
+
+        self.dropout1 = nn.Dropout(dropout)
+
+        self.feat_dim = feat_dim
+
+    def forward(self, X, UnmaskX):
+        """
+        Args:
+            X: (batch_size, seq_length, feat_dim) torch tensor of masked features (input)
+            padding_masks: (batch_size, seq_length) boolean tensor, 1 means keep vector at this position, 0 means padding
+        Returns:
+            output: (batch_size, seq_length, feat_dim)
+        """
+        # the function below is for passing through the entire enocde process again
+        def _process(inp):
+            if self.embedding == "linear":
+                inp = inp.permute(1, 0, 2)
+                inp = self.project_inp(inp) * math.sqrt(self.d_model)
+            elif self.embedding == "convolution":
+                inp = inp.permute(0, 2, 1)
+                inp = self.project_inp(inp)
+                inp = inp.permute(2, 0, 1)
+            else:
+                print(f"Either linear / convolution")
+                sys.exit()
+
+            inp = self.pos_enc(inp)
+            out = self.transformer_encoder(inp)
+            out = self.act(out)
+            out = out.permute(1, 0, 2)
+            out = self.dropout1(out)
+            return out
+
+        if self.embedding == "linear":
+            # permute because pytorch convention for transformers is [seq_length, batch_size, feat_dim]. padding_masks [batch_size, feat_dim]
+            inp = X.permute(1, 0, 2)
+            inp = self.project_inp(inp) * math.sqrt(
+                self.d_model)  # [seq_length, batch_size, d_model] project input vectors to d_model dimensional space
+        elif self.embedding == "convolution":
+            inp = X.permute(0, 2, 1)  # permute to (batch_size, feat_dim, seq_length)
+            inp = self.project_inp(inp)
+            inp = inp.permute(2, 0, 1)  # permute back to (seq_length, batch_size, d_model)
+        else:
+            print(f"Either linear / convolution")
+            sys.exit()
+
+        inp = self.pos_enc(inp)  # add positional encoding
+        # NOTE: logic for padding masks is reversed to comply with definition in MultiHeadAttention, TransformerEncoderLayer
+        output = self.transformer_encoder(inp)  # (seq_length, batch_size, d_model)
+        output = self.act(output)  # the output transformer encoder/decoder embeddings don't include non-linearity
+        output = output.permute(1, 0, 2)  # (batch_size, seq_length, d_model)
+        output = self.dropout1(output)
+        # Most probably defining a Linear(d_model,feat_dim) vectorizes the operation over (seq_length, batch_size).
+
+        if self.embedding == "linear":
+            output = self.output_layer(output)  # (batch_size, seq_length, feat_dim)
+            # output is the reconstruction which has the same size as the input X
+        elif self.embedding == "convolution":
+            # Change this line to permute the output to the right shape before passing it to the output layer
+            output = output.permute(0, 2, 1)  # (batch_size, d_model, seq_length)
+            output = self.output_layer(output)  # (batch_size, feat_dim, seq_length)
+            # Permute the output back to the original shape
+            output = output.permute(0, 2, 1)  # (batch_size, seq_length, feat_dim)
+            # output is the reconstruction which has the same size as the input X
+        else:
+            print(f"Either linear / convolution")
+            sys.exit()
+
+        """
+        output2: The result passing the reconstructed sequence through the encoder again.
+        output3: The result passing the original unmask sequence through the encoder.
+        """
+        # Compute the second output by processing the original output
+        output2 = _process(output)
+
+        # Compute the third output by processing UnmaskX
+        output3 = _process(UnmaskX)
+
+        return output, output2, output3
 
 
 class TSTransformerEncoderClassiregressor(nn.Module):
