@@ -18,13 +18,13 @@ def main():
 
     # config["general"]["pretrain_model"] = "results/kdd_model/One_out/linear/pretrain/window_size_30sec/freeze_False_epoch_500_lr_0.0001_d_hidden_64_d_ff_256_n_heads_8_n_layer_1_pos_encode_learnable_activation_gelu_norm_BatchNorm"
 
-    config["general"]["test_set"] = "Reading" # Reading or Desktop
+    config["general"]["test_set"] = "Desktop" # Reading or Desktop
 
     config["general"]["window_size"] = 150
-    config["general"]["overlap"] = 0.899
+    config["general"]["overlap"] = 0.8
     config["general"]["batch_size"] = 128
-    config["kdd_pretrain"]["epoch"] = 700
-    config["kdd_finetune"]["epoch"] = 600
+    config["kdd_pretrain"]["epoch"] = 5
+    config["kdd_finetune"]["epoch"] = 5
 
     config["kdd_model"]["d_hidden"] = 64
     config["kdd_model"]["d_ff"] = 256

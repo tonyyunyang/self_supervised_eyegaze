@@ -203,6 +203,8 @@ def pretrain_kdd_epoch_dual_loss(model, loss, optimizer, pretrain_data, config, 
     model = model.train()
     train_loss = 0
     active_elements = 0
+    weight_reconstruction = 0.5  # Weight for the reconstruction loss
+    weight_encoder_pass = 1 - weight_reconstruction  # Weight for the encoder pass loss
     for i, batch in enumerate(pretrain_data):
         X, UnmaskX, targets, target_masks, padding_masks, IDs = batch
         targets = targets.to(device)
@@ -214,10 +216,28 @@ def pretrain_kdd_epoch_dual_loss(model, loss, optimizer, pretrain_data, config, 
         # Cascade noise masks (batch_size, padded_length, feat_dim) and padding masks (batch_size, padded_length)
         target_masks = target_masks * padding_masks.unsqueeze(-1)
 
-        compute_loss = loss(reconstruction, targets,
-                            target_masks)  # (num_active,) individual loss (square error per element) for each active value in batch
-        batch_loss = torch.sum(compute_loss)
-        mean_loss = batch_loss / len(compute_loss)  # mean loss (over active elements) used for optimization
+        # Loss between reconstruction and targets
+        compute_loss_reconstruction = loss(reconstruction, targets, target_masks)
+
+        # Create a mask of True values for the encoder pass loss
+        encoder_pass_mask = torch.ones_like(reconstruction_pass_encoder, dtype=torch.bool).to(device)
+
+        # Loss between reconstruction_pass_encoder and original_pass_encoder
+        compute_loss_encoder_pass = loss(reconstruction_pass_encoder, original_pass_encoder, encoder_pass_mask)
+
+        # Compute the mean of each individual loss tensor
+        batch_loss_reconstruction = torch.sum(compute_loss_reconstruction)
+        batch_loss_encoder_pass = torch.sum(compute_loss_encoder_pass)
+        mean_loss_reconstruction = batch_loss_reconstruction / len(compute_loss_reconstruction)
+        mean_loss_encoder_pass = batch_loss_encoder_pass / len(compute_loss_encoder_pass)
+
+        # mean_loss_reconstruction = torch.mean(compute_loss_reconstruction)
+        # mean_loss_encoder_pass = torch.mean(compute_loss_encoder_pass)
+
+        # Combine the mean losses using the given weights
+        combined_loss = weight_reconstruction * mean_loss_reconstruction + weight_encoder_pass * mean_loss_encoder_pass
+
+        mean_loss = combined_loss
 
         if l2_reg:
             total_loss = mean_loss + config["kdd_pretrain"]["weight_decay"] * l2_reg_loss(model)
@@ -233,11 +253,11 @@ def pretrain_kdd_epoch_dual_loss(model, loss, optimizer, pretrain_data, config, 
         optimizer.step()
 
         with torch.no_grad():
-            active_elements += len(compute_loss)
-            train_loss += batch_loss.item()  # add total loss of batch
+            active_elements += len(compute_loss_reconstruction) + len(compute_loss_encoder_pass)
+            train_loss += batch_loss_reconstruction.item() + batch_loss_encoder_pass.item()  # add total loss of batch
 
         if epoch == config["kdd_pretrain"]["epoch"]:
-            np.savetxt(f"{config['general']['pretrain_model']}/pred.txt", predictions.cpu().detach().numpy().reshape(-1))
+            np.savetxt(f"{config['general']['pretrain_model']}/pred.txt", reconstruction.cpu().detach().numpy().reshape(-1))
             np.savetxt(f"{config['general']['pretrain_model']}/true.txt", targets.cpu().detach().numpy().reshape(-1))
             np.savetxt(f"{config['general']['pretrain_model']}/mask.txt", target_masks.cpu().detach().numpy().astype(int).reshape(-1))
 

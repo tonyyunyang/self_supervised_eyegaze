@@ -387,7 +387,7 @@ class TSTransformerEncoderDualLoss(nn.Module):
 
     def __init__(self, feat_dim, max_len, d_model, n_heads, num_layers, dim_feedforward, dropout=0.1,
                  pos_encoding='fixed', activation='gelu', norm='BatchNorm', embedding='convolution', freeze=False):
-        super(TSTransformerEncoder, self).__init__()
+        super(TSTransformerEncoderDualLoss, self).__init__()
 
         self.max_len = max_len
         self.d_model = d_model
@@ -447,7 +447,7 @@ class TSTransformerEncoderDualLoss(nn.Module):
             output: (batch_size, seq_length, feat_dim)
         """
         # the function below is for passing through the entire enocde process again
-        def _process(inp):
+        def encoder_process(inp):
             if self.embedding == "linear":
                 inp = inp.permute(1, 0, 2)
                 inp = self.project_inp(inp) * math.sqrt(self.d_model)
@@ -505,11 +505,15 @@ class TSTransformerEncoderDualLoss(nn.Module):
         output2: The result passing the reconstructed sequence through the encoder again.
         output3: The result passing the original unmask sequence through the encoder.
         """
+        # print(f"The shape of output is {output.shape}")
         # Compute the second output by processing the original output
-        output2 = _process(output)
+        output2 = encoder_process(output)
+        # print(f"The shape of output2 is {output2.shape}")
 
         # Compute the third output by processing UnmaskX
-        output3 = _process(UnmaskX)
+        output3 = encoder_process(UnmaskX)
+        # print(f"The shape of output3 is {output3.shape}")
+
 
         return output, output2, output3
 
