@@ -26,10 +26,10 @@ def main():
     config["kdd_pretrain"]["epoch"] = 5
     config["kdd_finetune"]["epoch"] = 5
 
-    config["kdd_model"]["d_hidden"] = 64
-    config["kdd_model"]["d_ff"] = 256
+    config["kdd_model"]["d_hidden"] = 16
+    config["kdd_model"]["d_ff"] = 64
     config["kdd_model"]["n_heads"] = 8
-    config["kdd_model"]["n_layers"] = 3
+    config["kdd_model"]["n_layers"] = 8
 
     # First load the data into dataloader according to chosen test_mode: Mixed or One_out
     if config["general"]["test_mode"] == "Mixed":
