@@ -422,7 +422,7 @@ def prepare_one_out_data_loader(train_data, train_labels, test_data, test_labels
     for label, count in label_counts.items():
         print(f"Label {label}: {count} samples")
 
-    pretrain_imputation_dataset = ImputationDataset(train_data, pretrain_indices, mean_mask_length=3, masking_ratio=0.15)
+    pretrain_imputation_dataset = ImputationDataset(train_data, pretrain_indices, mean_mask_length=5, masking_ratio=0.15)
     finetune_train_classification_dataset = ClassiregressionDataset(test_data, test_labels, finetune_train_indices)
     finetune_val_classification_dataset = ClassiregressionDataset(test_data, test_labels, finetune_val_indices)
     test_classification_dataset = ClassiregressionDataset(test_data, test_labels, test_indices)

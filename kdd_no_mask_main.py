@@ -16,15 +16,15 @@ def main():
         config = json.load(file)
     print(config)
 
-    # config["general"]["pretrain_model"] = "results/kdd_model/One_out/linear/pretrain/window_size_30sec/freeze_False_epoch_500_lr_0.0001_d_hidden_64_d_ff_256_n_heads_8_n_layer_1_pos_encode_learnable_activation_gelu_norm_BatchNorm"
+    # config["general"]["pretrain_model"] = "results/CosSin/kdd_model/One_out/convolution/pretrain/window_size_8sec/feat_dim_2/freeze_False_epoch_100_lr_0.001_d_hidden_8_d_ff_16_n_heads_4_n_layer_8_pos_encode_learnable_activation_gelu_norm_BatchNorm/"
 
     config["general"]["test_set"] = "CosSin" # Reading or Desktop or CosSin 
 
     config["general"]["window_size"] = 60 * 4
     config["general"]["overlap"] = 0.8
     config["general"]["batch_size"] = 128
-    config["kdd_pretrain"]["epoch"] = 100
-    config["kdd_finetune"]["epoch"] = 100
+    config["kdd_pretrain"]["epoch"] = 5
+    config["kdd_finetune"]["epoch"] = 5
 
     config["kdd_model"]["d_hidden"] = 8
     config["kdd_model"]["d_ff"] = 16
@@ -32,6 +32,7 @@ def main():
     config["kdd_model"]["n_layers"] = 1
     
     config["kdd_model"]["projection"] = "convolution"
+    # config["general"]["freeze"] = True
 
     # First load the data into dataloader according to chosen test_mode: Mixed or One_out
     if config["general"]["test_mode"] == "Mixed":
