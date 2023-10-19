@@ -102,6 +102,7 @@ def pretrain_kdd_epoch(model, loss, optimizer, pretrain_data, config, device, ep
                             target_masks)  # (num_active,) individual loss (square error per element) for each active value in batch
         batch_loss = torch.sum(compute_loss)
         mean_loss = batch_loss / len(compute_loss)  # mean loss (over active elements) used for optimization
+        # print(f"The mean-loss is {mean_loss}, The batch-loss is {batch_loss}, the number of examples is {len(compute_loss)}")
 
         if l2_reg:
             total_loss = mean_loss + config["kdd_pretrain"]["weight_decay"] * l2_reg_loss(model)
@@ -284,7 +285,10 @@ def kdd_pretrain_save_metrics(train_loss_list, config):
     numbers = generate_numbers(0, 700, 5)
 
     plt.figure(figsize=(10, 5))
-    plt.plot(train_loss_list, label="Training Loss")
+    # Exclude the first 50 values and generate x-axis values starting from certain value i
+    i = 50
+    x_values = np.arange(i, len(train_loss_list))
+    plt.plot(x_values, train_loss_list[i:], label="Training Loss")
 
     # Highlight the points
     if config["kdd_pretrain"]["harden"]:

@@ -20,6 +20,9 @@ def load_mixed_data(window_size, overlap, data_set):
     elif data_set == "Reading":
         directory = "data/ReadingActivity"
         leave_out_sample = "P09"
+    elif data_set == "CosSin":
+        directory = "data/cos_and_sin_test"
+        leave_out_sample = "P08"
     else:
         sys.exit()
 
@@ -53,6 +56,9 @@ def load_one_out_data(window_size, overlap, data_set):
     elif data_set == "Reading":
         directory = "data/ReadingActivity"
         leave_out_sample = "P09"
+    elif data_set == "CosSin":
+        directory = "data/cos_and_sin_test"
+        leave_out_sample = "P08"
     else:
         sys.exit()
 
