@@ -31,7 +31,7 @@ def main():
     config["kdd_model"]["n_heads"] = 8
     config["kdd_model"]["n_layers"] = 8
     
-    config["kdd_model"]["projection"] = "convolution"
+    config["kdd_model"]["projection"] = "linear"
     # config["general"]["freeze"] = True
 
     # THIS PYTHON FILE DOES NOT SUPPORT USING THE MIXED DATA
