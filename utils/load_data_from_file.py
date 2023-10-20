@@ -70,7 +70,7 @@ def load_one_out_data(window_size, overlap, data_set):
     train_labels = []
     test_data = []
     test_labels = []
-
+    
     for filename in os.listdir(directory):
         if filename.endswith(".csv"):
             label = filename.split("_")[1].split(".")[0]
@@ -90,8 +90,47 @@ def load_one_out_data(window_size, overlap, data_set):
     encoded_train_labels = encoder.fit_transform(train_labels)
     encoded_test_labels = encoder.fit_transform(test_labels)
     print_encoded_classes(encoder)
-
+        
     return np.array(train_data), np.array(encoded_train_labels), np.array(test_data), np.array(encoded_test_labels), encoder
+
+
+def load_uci_one_out_data(window_size, overlap, data_set):
+    directory = "data/UCI"
+    
+    def load_data_from_folder(folder):
+        data_list = []
+        # Sort files to ensure consistent order
+        for suffix in ['_x_', '_y_', '_z_']:
+            for modality in ['body_acc', 'body_gyro']:
+                filename = modality + suffix + folder + '.txt'
+                data = pd.read_csv(os.path.join(directory, folder, filename), header=None, delim_whitespace=True)
+                data_list.append(data.values[:,:,np.newaxis])  # Add a new axis to make shape (num_samples, 128, 1)
+        # Stack along the third dimension to get (num_samples, 128, 6)
+        stacked_data = np.concatenate(data_list, axis=2)
+        return stacked_data
+    
+    train_data = load_data_from_folder('train')
+    test_data = load_data_from_folder('test')
+    
+    # print(train_data[0])
+    
+    # Load train and test labels
+    train_labels_path = os.path.join(directory, "train", "y_train.txt")
+    test_labels_path = os.path.join(directory, "test", "y_test.txt")
+    
+    with open(train_labels_path, 'r') as f:
+        train_labels = [label.strip() for label in f.readlines()]
+
+    with open(test_labels_path, 'r') as f:
+        test_labels = [label.strip() for label in f.readlines()]
+
+    encoder = LabelEncoder()
+    encoded_train_labels = encoder.fit_transform(train_labels)
+    encoded_test_labels = encoder.fit_transform(test_labels)
+    print_encoded_classes(encoder)
+        
+    return np.array(train_data), np.array(encoded_train_labels), np.array(test_data), np.array(encoded_test_labels), encoder
+    
 
 
 def load_tight_one_out_data(window_size, overlap, data_set):

@@ -60,6 +60,7 @@ def main():
         feat_dim = train_data[0].shape[1]
         config["general"]["feat_dim"] = feat_dim
         print(f"The number of classes is {num_classes}, the feat_dim is {feat_dim}")
+        # print(f"The shape of train data is: {train_data.shape}")
 
         eyegaze_data_loader = (prepare_one_out_data_loader
                                (train_data, train_labels, test_data, test_labels,
