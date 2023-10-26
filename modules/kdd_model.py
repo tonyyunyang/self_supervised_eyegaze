@@ -295,8 +295,8 @@ class TSTransformerEncoder(nn.Module):
         self.embedding = embedding
 
         # Below are configurations for the convolution layer
-        kernel_size = 10
-        stride = 2
+        kernel_size = 5
+        stride = 1
         dilation = 1
         padding = 0
 
@@ -535,8 +535,8 @@ class TSTransformerEncoderClassiregressor(nn.Module):
         self.embedding = embedding
 
         # Below are configurations for the convolution layer
-        kernel_size = 10
-        stride = 2
+        kernel_size = 5
+        stride = 1
         dilation = 1
         padding = 0
 

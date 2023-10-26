@@ -530,7 +530,7 @@ def prepare_no_mask_one_out_data_loader(train_data, train_labels, test_data, tes
     finetune_test_indices = list(range(len(test_data)))
 
     # Split the indices for finetune and testing
-    test_indices, finetune_indices = train_test_split(finetune_test_indices, test_size=0.1, random_state=11, shuffle=True)
+    test_indices, finetune_indices = train_test_split(finetune_test_indices, test_size=0.5, random_state=11, shuffle=True)
     # Split the finetune data into training and validation
     finetune_train_indices, finetune_val_indices = train_test_split(finetune_indices, test_size=0.3, random_state=11, shuffle=True)
 
