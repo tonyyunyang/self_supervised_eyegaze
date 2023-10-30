@@ -45,6 +45,22 @@ def pretrain_kdd_model(model, loss, optimizer, pretrain_data, config):
 
     path = os.path.join(path, f"feat_dim_{int(config['general']['feat_dim'])}")
     os.makedirs(path, exist_ok=True)
+    
+    if config['kdd_model']['projection'] == 'convolution':
+        if int(config['general']['window_size'] / 30) == 5:
+            path = os.path.join(path, f"kernelsize_{int(config['conv1d_5sec']['first']['kernel_size'])}_
+                                stride_{int(config['conv1d_5sec']['first']['stride'])}_
+                                dilation_{int(config['conv1d_5sec']['first']['dilation'])}_
+                                padding_{int(config['conv1d_5sec']['first']['padding'])}")
+            os.makedirs(path, exist_ok=True)
+        elif int(config['general']['window_size'] / 30) == 30:
+            path = os.path.join(path, f"kernelsize_{int(config['conv1d_30sec']['first']['kernel_size'])}_
+                                stride_{int(config['conv1d_30sec']['first']['stride'])}_
+                                dilation_{int(config['conv1d_30sec']['first']['dilation'])}_
+                                padding_{int(config['conv1d_30sec']['first']['padding'])}")
+            os.makedirs(path, exist_ok=True)
+        else:
+            sys.exit("Please create the corresponding folder for the time interval first")
 
     path = os.path.join(path, f"freeze_{config['general']['freeze']}_epoch_{config['kdd_pretrain']['epoch']}_"
                               f"lr_{format(config['kdd_pretrain']['lr'], '.10f').rstrip('0').rstrip('.')}_"
@@ -162,6 +178,22 @@ def pretrain_kdd_model_dual_loss(model, loss, optimizer, pretrain_data, config):
 
     path = os.path.join(path, f"feat_dim_{int(config['general']['feat_dim'])}")
     os.makedirs(path, exist_ok=True)
+    
+    if config['kdd_model']['projection'] == 'convolution':
+        if int(config['general']['window_size'] / 30) == 5:
+            path = os.path.join(path, f"kernelsize_{int(config['conv1d_5sec']['first']['kernel_size'])}_
+                                stride_{int(config['conv1d_5sec']['first']['stride'])}_
+                                dilation_{int(config['conv1d_5sec']['first']['dilation'])}_
+                                padding_{int(config['conv1d_5sec']['first']['padding'])}")
+            os.makedirs(path, exist_ok=True)
+        elif int(config['general']['window_size'] / 30) == 30:
+            path = os.path.join(path, f"kernelsize_{int(config['conv1d_30sec']['first']['kernel_size'])}_
+                                stride_{int(config['conv1d_30sec']['first']['stride'])}_
+                                dilation_{int(config['conv1d_30sec']['first']['dilation'])}_
+                                padding_{int(config['conv1d_30sec']['first']['padding'])}")
+            os.makedirs(path, exist_ok=True)
+        else:
+            sys.exit("Please create the corresponding folder for the time interval first")
 
     path = os.path.join(path, f"freeze_{config['general']['freeze']}_epoch_{config['kdd_pretrain']['epoch']}_"
                               f"lr_{format(config['kdd_pretrain']['lr'], '.10f').rstrip('0').rstrip('.')}_"

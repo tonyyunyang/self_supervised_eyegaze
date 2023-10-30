@@ -21,7 +21,7 @@
 
   "kdd_finetune": {
     "epoch": 5,
-    "lr": 0.0005,
+    "lr": 0.001,
     "optimizer": "RAdam",
     "weight_decay": null
   },
@@ -78,7 +78,36 @@
       "activ": false,
       "dropout": false
     }
+  },
 
+  "conv1d_5sec": {
+    "first": {
+      "kernel_size": 30,
+      "stride": 10,
+      "dilation": 1,
+      "padding": 0
+    },
+    "second": {
+      "kernel_size": 30,
+      "stride": 10,
+      "dilation": 1,
+      "padding": 0
+    }
+  },
+
+  "conv1d_30sec": {
+    "first": {
+      "kernel_size": 60,
+      "stride": 30,
+      "dilation": 1,
+      "padding": 0
+    },
+    "second": {
+      "kernel_size": 60,
+      "stride": 30,
+      "dilation": 1,
+      "padding": 0
+    }
   }
 
 }
