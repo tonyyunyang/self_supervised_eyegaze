@@ -16,7 +16,7 @@ def main():
         config = json.load(file)
     print(config)
 
-    # config["general"]["pretrain_model"] = "results/Desktop/kdd_model/One_out/convolution/pretrain/window_size_5sec/feat_dim_2/freeze_False_epoch_1000_lr_0.001_d_hidden_8_d_ff_16_n_heads_4_n_layer_8_pos_encode_learnable_activation_gelu_norm_BatchNorm"
+    config["general"]["pretrain_model"] = "results/Desktop/kdd_model/One_out/convolution/pretrain/window_size_5sec/feat_dim_2/kernelsize_20_stride_10_dilation_1_padding_0/freeze_False_epoch_500_lr_0.001_d_hidden_8_d_ff_16_n_heads_4_n_layer_8_pos_encode_learnable_activation_gelu_norm_BatchNorm"
 
     config["general"]["test_set"] = "Desktop" # Reading or Desktop or CosSin
 

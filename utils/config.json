@@ -21,7 +21,7 @@
 
   "kdd_finetune": {
     "epoch": 5,
-    "lr": 0.001,
+    "lr": 0.003,
     "optimizer": "RAdam",
     "weight_decay": null
   },
@@ -82,13 +82,13 @@
 
   "conv1d_5sec": {
     "first": {
-      "kernel_size": 30,
+      "kernel_size": 20,
       "stride": 10,
       "dilation": 1,
       "padding": 0
     },
     "second": {
-      "kernel_size": 30,
+      "kernel_size": 20,
       "stride": 10,
       "dilation": 1,
       "padding": 0

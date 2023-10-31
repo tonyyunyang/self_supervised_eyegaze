@@ -48,16 +48,16 @@ def pretrain_kdd_model(model, loss, optimizer, pretrain_data, config):
     
     if config['kdd_model']['projection'] == 'convolution':
         if int(config['general']['window_size'] / 30) == 5:
-            path = os.path.join(path, f"kernelsize_{int(config['conv1d_5sec']['first']['kernel_size'])}_
-                                stride_{int(config['conv1d_5sec']['first']['stride'])}_
-                                dilation_{int(config['conv1d_5sec']['first']['dilation'])}_
-                                padding_{int(config['conv1d_5sec']['first']['padding'])}")
+            path = os.path.join(path, f"kernelsize_{int(config['conv1d_5sec']['first']['kernel_size'])}_"
+                                      f"stride_{int(config['conv1d_5sec']['first']['stride'])}_"
+                                      f"dilation_{int(config['conv1d_5sec']['first']['dilation'])}_"
+                                      f"padding_{int(config['conv1d_5sec']['first']['padding'])}")
             os.makedirs(path, exist_ok=True)
         elif int(config['general']['window_size'] / 30) == 30:
-            path = os.path.join(path, f"kernelsize_{int(config['conv1d_30sec']['first']['kernel_size'])}_
-                                stride_{int(config['conv1d_30sec']['first']['stride'])}_
-                                dilation_{int(config['conv1d_30sec']['first']['dilation'])}_
-                                padding_{int(config['conv1d_30sec']['first']['padding'])}")
+            path = os.path.join(path, f"kernelsize_{int(config['conv1d_30sec']['first']['kernel_size'])}_"
+                                      f"stride_{int(config['conv1d_30sec']['first']['stride'])}_"
+                                      f"dilation_{int(config['conv1d_30sec']['first']['dilation'])}_"
+                                      f"padding_{int(config['conv1d_30sec']['first']['padding'])}")
             os.makedirs(path, exist_ok=True)
         else:
             sys.exit("Please create the corresponding folder for the time interval first")
@@ -181,16 +181,16 @@ def pretrain_kdd_model_dual_loss(model, loss, optimizer, pretrain_data, config):
     
     if config['kdd_model']['projection'] == 'convolution':
         if int(config['general']['window_size'] / 30) == 5:
-            path = os.path.join(path, f"kernelsize_{int(config['conv1d_5sec']['first']['kernel_size'])}_
-                                stride_{int(config['conv1d_5sec']['first']['stride'])}_
-                                dilation_{int(config['conv1d_5sec']['first']['dilation'])}_
-                                padding_{int(config['conv1d_5sec']['first']['padding'])}")
+            path = os.path.join(path, f"kernelsize_{int(config['conv1d_5sec']['first']['kernel_size'])}_"
+                                      f"stride_{int(config['conv1d_5sec']['first']['stride'])}_"
+                                      f"dilation_{int(config['conv1d_5sec']['first']['dilation'])}_"
+                                      f"padding_{int(config['conv1d_5sec']['first']['padding'])}")
             os.makedirs(path, exist_ok=True)
         elif int(config['general']['window_size'] / 30) == 30:
-            path = os.path.join(path, f"kernelsize_{int(config['conv1d_30sec']['first']['kernel_size'])}_
-                                stride_{int(config['conv1d_30sec']['first']['stride'])}_
-                                dilation_{int(config['conv1d_30sec']['first']['dilation'])}_
-                                padding_{int(config['conv1d_30sec']['first']['padding'])}")
+            path = os.path.join(path, f"kernelsize_{int(config['conv1d_30sec']['first']['kernel_size'])}_"
+                                      f"stride_{int(config['conv1d_30sec']['first']['stride'])}_"
+                                      f"dilation_{int(config['conv1d_30sec']['first']['dilation'])}_"
+                                      f"padding_{int(config['conv1d_30sec']['first']['padding'])}")
             os.makedirs(path, exist_ok=True)
         else:
             sys.exit("Please create the corresponding folder for the time interval first")
