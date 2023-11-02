@@ -5,6 +5,8 @@ import time
 from tqdm import tqdm
 
 import torch
+# Set the flag of deterministic to true to reproduce the results of ConvTranspose1D
+# torch.backends.cudnn.deterministic = True
 
 from modules.loss import l2_reg_loss
 

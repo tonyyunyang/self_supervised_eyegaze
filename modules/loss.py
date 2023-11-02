@@ -16,10 +16,21 @@ class NoFussCrossEntropyLoss(nn.CrossEntropyLoss):
     pytorch's CrossEntropyLoss is fussy: 1) needs Long (int64) targets only, and 2) only 1D.
     This function satisfies these requirements
     """
-
+    
     def forward(self, inp, target):
-        return F.cross_entropy(inp, target.long().squeeze(), weight=self.weight,
+        # Convert target to long type
+        target = target.long()
+
+        # Squeeze only if the first dimension (batch size) is greater than 1
+        if target.dim() > 1 and target.size(0) > 1:
+            target = target.squeeze()
+
+        return F.cross_entropy(inp, target, weight=self.weight,
                                ignore_index=self.ignore_index, reduction=self.reduction)
+
+    # def forward(self, inp, target):
+    #     return F.cross_entropy(inp, target.long().squeeze(), weight=self.weight,
+    #                            ignore_index=self.ignore_index, reduction=self.reduction)
 
 
 class MaskedMSELoss(nn.Module):

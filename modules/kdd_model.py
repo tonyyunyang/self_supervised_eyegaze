@@ -189,10 +189,10 @@ def kdd_model4finetune_test(config, feat_dim, num_classes):
     return model
 
 
-def kdd_model4fullysupervise(config, feat_dim, num_classes):
+def kdd_model4fullysupervise_pretrain(config, feat_dim, num_classes):
     max_seq_len = config["general"]["window_size"]
 
-    model = TSTransformerEncoderClassiregressor(
+    model = TSTransformerEncoderClassiregressorTest(
         feat_dim,
         max_seq_len,
         config["kdd_model"]["d_hidden"],
@@ -206,7 +206,51 @@ def kdd_model4fullysupervise(config, feat_dim, num_classes):
         norm=config["kdd_model"]["norm"],
         embedding=config["kdd_model"]["projection"],
         freeze=config["general"]["freeze"],
+        conv_config=config["conv1d_5sec"],
     )
+
+    print("Model:\n{}".format(model))
+    print("Total number of parameters: {}".format(count_parameters(model)))
+    print("Trainable parameters: {}".format(count_parameters(model, trainable=True)))
+
+    return model
+
+
+def kdd_model4fullysupervise_finetune(config, feat_dim, num_classes):
+    max_seq_len = config["general"]["window_size"]
+
+    model = TSTransformerEncoderClassiregressorTest(
+        feat_dim,
+        max_seq_len,
+        config["kdd_model"]["d_hidden"],
+        config["kdd_model"]["n_heads"],
+        config["kdd_model"]["n_layers"],
+        config["kdd_model"]["d_ff"],
+        num_classes,
+        dropout=config["kdd_model"]["dropout"],
+        pos_encoding=config["kdd_model"]["pos_encoding"],
+        activation=config["kdd_model"]["activation"],
+        norm=config["kdd_model"]["norm"],
+        embedding=config["kdd_model"]["projection"],
+        freeze=config["general"]["freeze"],
+        conv_config=config["conv1d_5sec"],
+    )
+    
+    model_path = os.path.join(config["general"]["pretrain_model"], "best_model.pth")
+
+    state_dict = torch.load(model_path)
+    
+    model.load_state_dict(state_dict, strict=False)
+
+    print('Loaded model from {}'.format(model_path))
+
+    if config["general"]["freeze"]:
+        for name, param in model.named_parameters():
+            print(f"{name}")
+            if name.startswith('output_layer'):
+                param.requires_grad = True
+            else:
+                param.requires_grad = False
 
     print("Model:\n{}".format(model))
     print("Total number of parameters: {}".format(count_parameters(model)))

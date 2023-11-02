@@ -1,7 +1,11 @@
 import os
+import sys
 import time
 
 import torch
+# Set the flag of deterministic to true to reproduce the results of ConvTranspose1D
+# torch.backends.cudnn.deterministic = True
+
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
 import seaborn as sns
 from matplotlib import pyplot as plt
@@ -41,6 +45,22 @@ def finetune_kdd_model(model, loss, optimizer, train_set, val_set, config):
     path = os.path.join(path, f"feat_dim_{int(config['general']['feat_dim'])}")
     os.makedirs(path, exist_ok=True)
 
+    if config['kdd_model']['projection'] == 'convolution':
+        if int(config['general']['window_size'] / 30) == 5:
+            path = os.path.join(path, f"kernelsize_{int(config['conv1d_5sec']['first']['kernel_size'])}_"
+                                      f"stride_{int(config['conv1d_5sec']['first']['stride'])}_"
+                                      f"dilation_{int(config['conv1d_5sec']['first']['dilation'])}_"
+                                      f"padding_{int(config['conv1d_5sec']['first']['padding'])}")
+            os.makedirs(path, exist_ok=True)
+        elif int(config['general']['window_size'] / 30) == 30:
+            path = os.path.join(path, f"kernelsize_{int(config['conv1d_30sec']['first']['kernel_size'])}_"
+                                      f"stride_{int(config['conv1d_30sec']['first']['stride'])}_"
+                                      f"dilation_{int(config['conv1d_30sec']['first']['dilation'])}_"
+                                      f"padding_{int(config['conv1d_30sec']['first']['padding'])}")
+            os.makedirs(path, exist_ok=True)
+        else:
+            sys.exit("Please create the corresponding folder for the time interval first")
+
     path = os.path.join(path, f"freeze_{config['general']['freeze']}_epoch_{config['kdd_finetune']['epoch']}_"
                               f"lr_{format(config['kdd_finetune']['lr'], '.10f').rstrip('0').rstrip('.')}_"
                               f"d_hidden_{config['kdd_model']['d_hidden']}_d_ff_{config['kdd_model']['d_ff']}_"
@@ -77,7 +97,7 @@ def finetune_kdd_model(model, loss, optimizer, train_set, val_set, config):
             f"Accuracy: {val_acc:.4f}, F1 Score: {val_f1:.4f}, Time: {epoch_runtime}")
 
         # Save the best model based on validation accuracy
-        if val_acc > best_val_acc:
+        if val_acc >= best_val_acc:
             best_val_acc = val_acc
             torch.save(
                 model.state_dict(), os.path.join(config["general"]["finetune_model"], "best_model.pth")
@@ -91,7 +111,7 @@ def finetune_kdd_model(model, loss, optimizer, train_set, val_set, config):
     kdd_finetune_save_metrics(train_loss_list, val_loss_list, val_accuracy_list, val_f1_score_list, config)
 
 
-def full_supervise_train_kdd_model(model, loss, optimizer, train_set, val_set, config):
+def fully_supervise_train_kdd_model_pretrain(model, loss, optimizer, train_set, val_set, config):
     # Check if CUDA is available
     # if not torch.cuda.is_available():
     #     print("CUDA is not available. Please activate CUDA for GPU acceleration.")
@@ -115,7 +135,7 @@ def full_supervise_train_kdd_model(model, loss, optimizer, train_set, val_set, c
     path = os.path.join(path, f"{config['kdd_model']['projection']}")
     os.makedirs(path, exist_ok=True)
 
-    path = os.path.join(path, f"fully_supervised")
+    path = os.path.join(path, f"fully_supervised_pretrain")
     os.makedirs(path, exist_ok=True)
 
     path = os.path.join(path, f"window_size_{int(config['general']['window_size'] / 30)}sec")
@@ -123,6 +143,121 @@ def full_supervise_train_kdd_model(model, loss, optimizer, train_set, val_set, c
 
     path = os.path.join(path, f"feat_dim_{int(config['general']['feat_dim'])}")
     os.makedirs(path, exist_ok=True)
+    
+    if config['kdd_model']['projection'] == 'convolution':
+        if int(config['general']['window_size'] / 30) == 5:
+            path = os.path.join(path, f"kernelsize_{int(config['conv1d_5sec']['first']['kernel_size'])}_"
+                                      f"stride_{int(config['conv1d_5sec']['first']['stride'])}_"
+                                      f"dilation_{int(config['conv1d_5sec']['first']['dilation'])}_"
+                                      f"padding_{int(config['conv1d_5sec']['first']['padding'])}")
+            os.makedirs(path, exist_ok=True)
+        elif int(config['general']['window_size'] / 30) == 30:
+            path = os.path.join(path, f"kernelsize_{int(config['conv1d_30sec']['first']['kernel_size'])}_"
+                                      f"stride_{int(config['conv1d_30sec']['first']['stride'])}_"
+                                      f"dilation_{int(config['conv1d_30sec']['first']['dilation'])}_"
+                                      f"padding_{int(config['conv1d_30sec']['first']['padding'])}")
+            os.makedirs(path, exist_ok=True)
+        else:
+            sys.exit("Please create the corresponding folder for the time interval first")
+
+    path = os.path.join(path, f"freeze_{config['general']['freeze']}_epoch_{config['kdd_pretrain']['epoch']}_"
+                              f"lr_{format(config['kdd_pretrain']['lr'], '.10f').rstrip('0').rstrip('.')}_"
+                              f"d_hidden_{config['kdd_model']['d_hidden']}_d_ff_{config['kdd_model']['d_ff']}_"
+                              f"n_heads_{config['kdd_model']['n_heads']}_n_layer_{config['kdd_model']['n_layers']}_"
+                              f"pos_encode_{config['kdd_model']['pos_encoding']}_"
+                              f"activation_{config['kdd_model']['activation']}_norm_{config['kdd_model']['norm']}")
+    os.makedirs(path, exist_ok=True)
+
+    config["general"]["pretrain_model"] = path
+
+    model = model.to(device)
+
+    train_loss_list = []
+    val_loss_list = []
+    val_accuracy_list = []
+    val_f1_score_list = []
+
+    best_val_acc = 0  # Initialize variable to keep track of best validation accuracy
+
+    for epoch in range(1, config["kdd_pretrain"]["epoch"] + 1):
+        epoch_start_time = time.time()
+
+        train_loss, val_loss, val_acc, val_f1 = finetune_kdd_epoch(model, loss, optimizer, train_set, val_set, config,
+                                                                   device, epoch, l2_reg=False)
+        train_loss_list.append(train_loss)
+        val_loss_list.append(val_loss)
+        val_accuracy_list.append(val_acc)
+        val_f1_score_list.append(val_f1)
+
+        epoch_runtime = time.time() - epoch_start_time
+
+        print(
+            f"Epoch {epoch}/{config['kdd_pretrain']['epoch']}, Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}, "
+            f"Accuracy: {val_acc:.4f}, F1 Score: {val_f1:.4f}, Time: {epoch_runtime}")
+
+        # Save the best model based on validation accuracy
+        if val_acc >= best_val_acc:
+            best_val_acc = val_acc
+            torch.save(
+                model.state_dict(), os.path.join(config["general"]["pretrain_model"], "best_model.pth")
+            )
+
+    # Save the model for continuing the training
+    torch.save(
+        model.state_dict(), os.path.join(config["general"]["pretrain_model"], "continue_model.pth")
+    )
+
+    kdd_fully_supervised_pretrain_save_metrics(train_loss_list, val_loss_list, val_accuracy_list, val_f1_score_list, config)
+
+
+def fully_supervise_train_kdd_model_finetune(model, loss, optimizer, train_set, val_set, config):
+    # Check if CUDA is available
+    # if not torch.cuda.is_available():
+    #     print("CUDA is not available. Please activate CUDA for GPU acceleration.")
+    #     print("This is a computationally expensive training process and requires GPU acceleration.")
+    #     sys.exit()
+    # print("CUDA ACTIVATED")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"=============================================================\n"
+          f"=====================Training via {device}===================\n"
+          f"=============================================================")
+
+    path = os.path.join("results", f"{config['general']['test_set']}")
+    os.makedirs(path, exist_ok=True)
+
+    path = os.path.join(path, f"kdd_model")
+    os.makedirs(path, exist_ok=True)
+
+    path = os.path.join(path, f"{config['general']['test_mode']}")
+    os.makedirs(path, exist_ok=True)
+
+    path = os.path.join(path, f"{config['kdd_model']['projection']}")
+    os.makedirs(path, exist_ok=True)
+
+    path = os.path.join(path, f"fully_supervised_finetune")
+    os.makedirs(path, exist_ok=True)
+
+    path = os.path.join(path, f"window_size_{int(config['general']['window_size'] / 30)}sec")
+    os.makedirs(path, exist_ok=True)
+
+    path = os.path.join(path, f"feat_dim_{int(config['general']['feat_dim'])}")
+    os.makedirs(path, exist_ok=True)
+    
+    if config['kdd_model']['projection'] == 'convolution':
+        if int(config['general']['window_size'] / 30) == 5:
+            path = os.path.join(path, f"kernelsize_{int(config['conv1d_5sec']['first']['kernel_size'])}_"
+                                      f"stride_{int(config['conv1d_5sec']['first']['stride'])}_"
+                                      f"dilation_{int(config['conv1d_5sec']['first']['dilation'])}_"
+                                      f"padding_{int(config['conv1d_5sec']['first']['padding'])}")
+            os.makedirs(path, exist_ok=True)
+        elif int(config['general']['window_size'] / 30) == 30:
+            path = os.path.join(path, f"kernelsize_{int(config['conv1d_30sec']['first']['kernel_size'])}_"
+                                      f"stride_{int(config['conv1d_30sec']['first']['stride'])}_"
+                                      f"dilation_{int(config['conv1d_30sec']['first']['dilation'])}_"
+                                      f"padding_{int(config['conv1d_30sec']['first']['padding'])}")
+            os.makedirs(path, exist_ok=True)
+        else:
+            sys.exit("Please create the corresponding folder for the time interval first")
 
     path = os.path.join(path, f"freeze_{config['general']['freeze']}_epoch_{config['kdd_finetune']['epoch']}_"
                               f"lr_{format(config['kdd_finetune']['lr'], '.10f').rstrip('0').rstrip('.')}_"
@@ -160,7 +295,7 @@ def full_supervise_train_kdd_model(model, loss, optimizer, train_set, val_set, c
             f"Accuracy: {val_acc:.4f}, F1 Score: {val_f1:.4f}, Time: {epoch_runtime}")
 
         # Save the best model based on validation accuracy
-        if val_acc > best_val_acc:
+        if val_acc >= best_val_acc:
             best_val_acc = val_acc
             torch.save(
                 model.state_dict(), os.path.join(config["general"]["finetune_model"], "best_model.pth")
@@ -185,7 +320,6 @@ def finetune_kdd_epoch(model, loss, optimizer, train_set, val_set, config, devic
         targets = targets.to(device)
         # padding_masks = padding_masks.to(device)
         predictions = model(X.to(device))
-
         compute_loss = loss(predictions, targets)
         batch_loss = torch.sum(compute_loss)
         mean_loss = batch_loss / len(compute_loss)
@@ -261,6 +395,25 @@ def kdd_finetune_save_metrics(train_loss_list, val_loss_list, val_accuracy_list,
 
     plt.tight_layout()
     plt.savefig(os.path.join(config["general"]["finetune_model"], "all_metrics_plot.png"))
+
+
+def kdd_fully_supervised_pretrain_save_metrics(train_loss_list, val_loss_list, val_accuracy_list, val_f1_score_list, config):
+    # Plot and save the metrics
+    epochs = range(1, config["kdd_pretrain"]["epoch"] + 1)
+    plt.figure(figsize=(12, 8))
+
+    plt.plot(epochs, train_loss_list, label='Train Loss', linestyle='--')
+    plt.plot(epochs, val_loss_list, label='Validation Loss', linestyle='--')
+    plt.plot(epochs, val_accuracy_list, label='Validation Accuracy', linestyle='-')
+    plt.plot(epochs, val_f1_score_list, label='Validation F1 Score', linestyle='-')
+
+    plt.title('Training and Validation Metrics')
+    plt.xlabel('Epochs')
+    plt.ylabel('Metrics')
+    plt.legend()
+
+    plt.tight_layout()
+    plt.savefig(os.path.join(config["general"]["pretrain_model"], "all_metrics_plot.png"))
 
 
 def eval_finetune_kdd_model(model, test_set, config, encoder):
