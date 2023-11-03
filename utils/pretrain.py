@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 import torch
 # Set the flag of deterministic to true to reproduce the results of ConvTranspose1D
-# torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.deterministic = True
 
 from modules.loss import l2_reg_loss
 
@@ -49,20 +49,26 @@ def pretrain_kdd_model(model, loss, optimizer, pretrain_data, config):
     os.makedirs(path, exist_ok=True)
     
     if config['kdd_model']['projection'] == 'convolution':
-        if int(config['general']['window_size'] / 30) == 5:
-            path = os.path.join(path, f"kernelsize_{int(config['conv1d_5sec']['first']['kernel_size'])}_"
-                                      f"stride_{int(config['conv1d_5sec']['first']['stride'])}_"
-                                      f"dilation_{int(config['conv1d_5sec']['first']['dilation'])}_"
-                                      f"padding_{int(config['conv1d_5sec']['first']['padding'])}")
-            os.makedirs(path, exist_ok=True)
-        elif int(config['general']['window_size'] / 30) == 30:
-            path = os.path.join(path, f"kernelsize_{int(config['conv1d_30sec']['first']['kernel_size'])}_"
-                                      f"stride_{int(config['conv1d_30sec']['first']['stride'])}_"
-                                      f"dilation_{int(config['conv1d_30sec']['first']['dilation'])}_"
-                                      f"padding_{int(config['conv1d_30sec']['first']['padding'])}")
-            os.makedirs(path, exist_ok=True)
+        if config['general']['stack_conv'] == False:
+            if int(config['general']['window_size'] / 30) == 5:
+                path = os.path.join(path, f"kernelsize_{int(config['conv1d_5sec']['first']['kernel_size'])}_"
+                                        f"stride_{int(config['conv1d_5sec']['first']['stride'])}_"
+                                        f"dilation_{int(config['conv1d_5sec']['first']['dilation'])}_"
+                                        f"padding_{int(config['conv1d_5sec']['first']['padding'])}")
+                os.makedirs(path, exist_ok=True)
+            elif int(config['general']['window_size'] / 30) == 30:
+                path = os.path.join(path, f"kernelsize_{int(config['conv1d_30sec']['first']['kernel_size'])}_"
+                                        f"stride_{int(config['conv1d_30sec']['first']['stride'])}_"
+                                        f"dilation_{int(config['conv1d_30sec']['first']['dilation'])}_"
+                                        f"padding_{int(config['conv1d_30sec']['first']['padding'])}")
+                os.makedirs(path, exist_ok=True)
+            else:
+                sys.exit("Please create the corresponding folder for the time interval first")
         else:
-            sys.exit("Please create the corresponding folder for the time interval first")
+            if int(config['general']['window_size'] / 30) == 15:
+                path = os.path.join(path, f"stack_convolution")
+                os.makedirs(path, exist_ok=True)
+                
 
     path = os.path.join(path, f"freeze_{config['general']['freeze']}_epoch_{config['kdd_pretrain']['epoch']}_"
                               f"lr_{format(config['kdd_pretrain']['lr'], '.10f').rstrip('0').rstrip('.')}_"
