@@ -15,6 +15,37 @@ from matplotlib import pyplot as plt
 import numpy as np
 
 
+def create_path_for_config(duration, config, path):
+    # Define a mapping from window size to config keys
+    duration_to_key = {
+        5: 'conv1d_5sec',
+        10: 'conv1d_10sec',
+        15: 'conv1d_15sec',
+        30: 'conv1d_30sec'
+    }
+
+    # Find the corresponding configuration key based on the window size
+    config_key = duration_to_key.get(duration)
+
+    if not config_key:
+        sys.exit("Please create the corresponding folder for the time interval first")
+
+    # Construct the new path using the configuration values
+    conv_config = config[config_key]['first']
+    new_path = os.path.join(
+        path,
+        f"kernelsize_{conv_config['kernel_size']}_"
+        f"stride_{conv_config['stride']}_"
+        f"dilation_{conv_config['dilation']}_"
+        f"padding_{conv_config['padding']}"
+    )
+
+    # Create directory if it does not exist
+    os.makedirs(new_path, exist_ok=True)
+
+    return new_path
+
+
 def pretrain_kdd_model(model, loss, optimizer, pretrain_data, config):
     # Check if CUDA is available
     # if not torch.cuda.is_available():
@@ -49,27 +80,12 @@ def pretrain_kdd_model(model, loss, optimizer, pretrain_data, config):
     os.makedirs(path, exist_ok=True)
     
     if config['kdd_model']['projection'] == 'convolution':
-        if config['general']['stack_conv'] == False:
-            if int(config['general']['window_size'] / 30) == 5:
-                path = os.path.join(path, f"kernelsize_{int(config['conv1d_5sec']['first']['kernel_size'])}_"
-                                        f"stride_{int(config['conv1d_5sec']['first']['stride'])}_"
-                                        f"dilation_{int(config['conv1d_5sec']['first']['dilation'])}_"
-                                        f"padding_{int(config['conv1d_5sec']['first']['padding'])}")
-                os.makedirs(path, exist_ok=True)
-            elif int(config['general']['window_size'] / 30) == 30:
-                path = os.path.join(path, f"kernelsize_{int(config['conv1d_30sec']['first']['kernel_size'])}_"
-                                        f"stride_{int(config['conv1d_30sec']['first']['stride'])}_"
-                                        f"dilation_{int(config['conv1d_30sec']['first']['dilation'])}_"
-                                        f"padding_{int(config['conv1d_30sec']['first']['padding'])}")
-                os.makedirs(path, exist_ok=True)
-            else:
-                sys.exit("Please create the corresponding folder for the time interval first")
+        if not config['general']['stack_conv']:
+            window_duration = int(config['general']['window_size'] / 30)
+            path = create_path_for_config(window_duration, config, path)
         else:
-            if int(config['general']['window_size'] / 30) == 15:
-                path = os.path.join(path, f"stack_convolution")
-                os.makedirs(path, exist_ok=True)
+            path = os.path.join(path, f"stack_convolution")
                 
-
     path = os.path.join(path, f"freeze_{config['general']['freeze']}_epoch_{config['kdd_pretrain']['epoch']}_"
                               f"lr_{format(config['kdd_pretrain']['lr'], '.10f').rstrip('0').rstrip('.')}_"
                               f"d_hidden_{config['kdd_model']['d_hidden']}_d_ff_{config['kdd_model']['d_ff']}_"

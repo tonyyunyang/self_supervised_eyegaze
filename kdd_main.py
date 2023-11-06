@@ -18,20 +18,21 @@ def main():
 
     # config["general"]["pretrain_model"] = "results/kdd_model/One_out/linear/pretrain/window_size_30sec/freeze_False_epoch_500_lr_0.0001_d_hidden_64_d_ff_256_n_heads_8_n_layer_1_pos_encode_learnable_activation_gelu_norm_BatchNorm"
 
-    config["general"]["test_set"] = "CosSin" # Reading or Desktop or CosSin 
+    config["general"]["test_set"] = "Desktop" # Reading or Desktop or CosSin
 
-    config["general"]["window_size"] = 60 * 4
+    config["general"]["window_size"] = 300
     config["general"]["overlap"] = 0.8
     config["general"]["batch_size"] = 128
-    config["kdd_pretrain"]["epoch"] = 100
-    config["kdd_finetune"]["epoch"] = 1000
+    config["kdd_pretrain"]["epoch"] = 1200
+    config["kdd_finetune"]["epoch"] = 6000
 
     config["kdd_model"]["d_hidden"] = 8
     config["kdd_model"]["d_ff"] = 16
     config["kdd_model"]["n_heads"] = 4
-    config["kdd_model"]["n_layers"] = 1
+    config["kdd_model"]["n_layers"] = 8
     
     config["kdd_model"]["projection"] = "convolution"
+    config["general"]["stack_conv"] = False
     # config["general"]["freeze"] = True
 
     # First load the data into dataloader according to chosen test_mode: Mixed or One_out
@@ -65,7 +66,8 @@ def main():
         eyegaze_data_loader = (prepare_one_out_data_loader
                                (train_data, train_labels, test_data, test_labels,
                                 batch_size=config["general"]["batch_size"],
-                                max_len=config["general"]["window_size"]))
+                                max_len=config["general"]["window_size"],
+                                labeled_percentage=0.2))
     else:
         print("Either Mixed / One_out")
         sys.exit()

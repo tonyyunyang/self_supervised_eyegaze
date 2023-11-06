@@ -438,13 +438,13 @@ def limu_prepare_mixed_data_loader(config, data, labels, batch_size, max_len):
     return pretrain_loader, finetune_train_loader, finetune_val_loader, test_loader
 
 
-def prepare_one_out_data_loader(train_data, train_labels, test_data, test_labels, batch_size, max_len):
+def prepare_one_out_data_loader(train_data, train_labels, test_data, test_labels, batch_size, max_len, labeled_percentage):
     # Get the range of the indices for pretrain, fine tune and testing data
     pretrain_indices = np.arange(len(train_data))
     finetune_test_indices = list(range(len(test_data)))
 
     # Split the indices for finetune and testing
-    test_indices, finetune_indices = train_test_split(finetune_test_indices, test_size=0.1, random_state=11, shuffle=True)
+    test_indices, finetune_indices = train_test_split(finetune_test_indices, test_size=labeled_percentage, random_state=11, shuffle=True)
     # Split the finetune data into training and validation
     finetune_train_indices, finetune_val_indices = train_test_split(finetune_indices, test_size=0.3, random_state=11, shuffle=True)
 
@@ -461,7 +461,7 @@ def prepare_one_out_data_loader(train_data, train_labels, test_data, test_labels
     for label, count in label_counts.items():
         print(f"Label {label}: {count} samples")
 
-    pretrain_imputation_dataset = ImputationDataset(train_data, pretrain_indices, mean_mask_length=5, masking_ratio=0.15)
+    pretrain_imputation_dataset = ImputationDataset(train_data, pretrain_indices, mean_mask_length=10, masking_ratio=0.2)
     finetune_train_classification_dataset = ClassiregressionDataset(test_data, test_labels, finetune_train_indices)
     finetune_val_classification_dataset = ClassiregressionDataset(test_data, test_labels, finetune_val_indices)
     test_classification_dataset = ClassiregressionDataset(test_data, test_labels, test_indices)
@@ -524,13 +524,13 @@ def prepare_one_out_data_loader_dual_loss(train_data, train_labels, test_data, t
     return pretrain_loader, finetune_train_loader, finetune_val_loader, test_loader
 
 
-def prepare_no_mask_one_out_data_loader(train_data, train_labels, test_data, test_labels, batch_size, max_len):
+def prepare_no_mask_one_out_data_loader(train_data, train_labels, test_data, test_labels, batch_size, max_len, labeled_percentage):
     # Get the range of the indices for pretrain, fine tune and testing data
     pretrain_indices = np.arange(len(train_data))
     finetune_test_indices = list(range(len(test_data)))
 
     # Split the indices for finetune and testing
-    test_indices, finetune_indices = train_test_split(finetune_test_indices, test_size=0.3, random_state=11, shuffle=True)
+    test_indices, finetune_indices = train_test_split(finetune_test_indices, test_size=labeled_percentage, random_state=11, shuffle=True)
     # Split the finetune data into training and validation
     finetune_train_indices, finetune_val_indices = train_test_split(finetune_indices, test_size=0.3, random_state=11, shuffle=True)
 
@@ -567,7 +567,7 @@ def prepare_no_mask_one_out_data_loader(train_data, train_labels, test_data, tes
     return pretrain_loader, finetune_train_loader, finetune_val_loader, test_loader
 
 
-def prepare_fully_supervised_one_out_data_loader(train_data, train_labels, test_data, test_labels, batch_size, max_len):
+def prepare_fully_supervised_one_out_data_loader(train_data, train_labels, test_data, test_labels, batch_size, max_len, labeled_percentage):
     # Get the range of the indices for pretrain, fine tune and testing data
     pretrain_indices = np.arange(len(train_data))
     finetune_test_indices = list(range(len(test_data)))
@@ -576,7 +576,7 @@ def prepare_fully_supervised_one_out_data_loader(train_data, train_labels, test_
     pretrain_train_indicies, pretrain_val_indicies = train_test_split(pretrain_indices, test_size=0.3, random_state=11, shuffle=True)
     
     # Split the indices for finetune and testing
-    test_indices, finetune_indices = train_test_split(finetune_test_indices, test_size=0.5, random_state=11, shuffle=True)
+    test_indices, finetune_indices = train_test_split(finetune_test_indices, test_size=labeled_percentage, random_state=11, shuffle=True)
     # Split the finetune data into training and validation
     finetune_train_indices, finetune_val_indices = train_test_split(finetune_indices, test_size=0.3, random_state=11, shuffle=True)
 
