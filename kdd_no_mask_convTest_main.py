@@ -26,11 +26,12 @@ def main():
     config["kdd_pretrain"]["epoch"] = 1200
     config["kdd_finetune"]["epoch"] = 6000
 
-    config["kdd_model"]["d_hidden"] = 8
-    config["kdd_model"]["d_ff"] = 16
-    config["kdd_model"]["n_heads"] = 4
+    config["kdd_model"]["d_hidden"] = 16
+    config["kdd_model"]["d_ff"] = 128
+    config["kdd_model"]["n_heads"] = 8
     config["kdd_model"]["n_layers"] = 8
     
+    config["kdd_model"]["pos_encoding"] = "learnable"
     config["kdd_model"]["projection"] = "convolution"
     config["general"]["stack_conv"] = False
     # config["general"]["freeze"] = True

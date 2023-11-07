@@ -26,7 +26,7 @@ def main():
     config["kdd_pretrain"]["epoch"] = 1200
     config["kdd_finetune"]["epoch"] = 7200
 
-    config["kdd_model"]["d_hidden"] = 16
+    config["kdd_model"]["d_hidden"] = 32
     config["kdd_model"]["d_ff"] = 128
     config["kdd_model"]["n_heads"] = 4
     config["kdd_model"]["n_layers"] = 8
