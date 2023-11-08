@@ -16,14 +16,14 @@ def main():
         config = json.load(file)
     print(config)
 
-    # config["general"]["pretrain_model"] = "results/Desktop/kdd_model/One_out/convolution/pretrain/window_size_15sec/feat_dim_2/kernelsize_40_stride_20_dilation_1_padding_0/freeze_False_epoch_1200_lr_0.001_d_hidden_16_d_ff_128_n_heads_4_n_layer_8_pos_encode_learnable_activation_gelu_norm_BatchNorm"
+    # config["general"]["pretrain_model"] = "results/Desktop/kdd_model/One_out/convolution/pretrain/window_size_10sec/feat_dim_2/kernelsize_30_stride_15_dilation_1_padding_0/freeze_False_epoch_2000_lr_0.001_d_hidden_16_d_ff_128_n_heads_8_n_layer_8_pos_encode_learnable_activation_gelu_norm_LayerNorm"
 
     config["general"]["test_set"] = "Desktop" # Reading or Desktop or CosSin
 
     config["general"]["window_size"] = 300
     config["general"]["overlap"] = 0.8
     config["general"]["batch_size"] = 128
-    config["kdd_pretrain"]["epoch"] = 1200
+    config["kdd_pretrain"]["epoch"] = 2000
     config["kdd_finetune"]["epoch"] = 6000
 
     config["kdd_model"]["d_hidden"] = 16
@@ -31,7 +31,9 @@ def main():
     config["kdd_model"]["n_heads"] = 8
     config["kdd_model"]["n_layers"] = 8
     
-    config["kdd_model"]["pos_encoding"] = "learnable"
+    config["kdd_model"]["pos_encoding"] = "fixed"
+    config["kdd_model"]["activation"] = "gelu"
+    config["kdd_model"]["norm"] = "LayerNorm"
     config["kdd_model"]["projection"] = "convolution"
     config["general"]["stack_conv"] = False
     # config["general"]["freeze"] = True

@@ -154,7 +154,7 @@ def pretrain_kdd_epoch(model, loss, optimizer, pretrain_data, config, device, ep
         total_loss.backward()
 
         # torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=1.0)
-        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=4.0)
+        # torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=4.0)
         optimizer.step()
 
         with torch.no_grad():
