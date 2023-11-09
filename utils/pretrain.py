@@ -21,6 +21,7 @@ def create_path_for_config(duration, config, path):
         5: 'conv1d_5sec',
         10: 'conv1d_10sec',
         15: 'conv1d_15sec',
+        20: 'conv1d_20sec',
         30: 'conv1d_30sec'
     }
 

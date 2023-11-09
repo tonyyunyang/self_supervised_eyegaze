@@ -86,7 +86,7 @@ def kdd_model4pretrain_test(config, feat_dim):
         norm=config["kdd_model"]["norm"],
         embedding=config["kdd_model"]["projection"],
         freeze=config["general"]["freeze"],
-        conv_config=config["conv1d_30sec"],
+        conv_config=config["conv1d_20sec"],
     )
 
     print("Model:\n{}".format(model))
@@ -260,7 +260,7 @@ def kdd_model4finetune_test(config, feat_dim, num_classes):
         norm=config["kdd_model"]["norm"],
         embedding=config["kdd_model"]["projection"],
         freeze=config["general"]["freeze"],
-        conv_config=config["conv1d_30sec"],
+        conv_config=config["conv1d_20sec"],
     )
 
     model_path = os.path.join(config["general"]["pretrain_model"], "best_model.pth")
