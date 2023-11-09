@@ -16,14 +16,14 @@ def main():
         config = json.load(file)
     print(config)
 
-    # config["general"]["pretrain_model"] = "results/Desktop/kdd_model/One_out/convolution/pretrain/window_size_10sec/feat_dim_2/kernelsize_30_stride_15_dilation_1_padding_0/freeze_False_epoch_2000_lr_0.001_d_hidden_16_d_ff_128_n_heads_8_n_layer_8_pos_encode_learnable_activation_gelu_norm_LayerNorm"
+    config["general"]["pretrain_model"] = "results/Desktop/kdd_model/One_out/convolution/pretrain/window_size_30sec/feat_dim_2/kernelsize_30_stride_15_dilation_1_padding_0/freeze_False_epoch_2000_lr_0.001_d_hidden_16_d_ff_128_n_heads_8_n_layer_8_pos_encode_learnable_activation_gelu_norm_LayerNorm"
 
     config["general"]["test_set"] = "Desktop" # Reading or Desktop or CosSin
 
-    config["general"]["window_size"] = 300
+    config["general"]["window_size"] = 900
     config["general"]["overlap"] = 0.8
     config["general"]["batch_size"] = 128
-    config["kdd_pretrain"]["epoch"] = 3000
+    config["kdd_pretrain"]["epoch"] = 2000
     config["kdd_finetune"]["epoch"] = 6000
 
     config["kdd_model"]["d_hidden"] = 16

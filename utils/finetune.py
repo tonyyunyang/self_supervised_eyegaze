@@ -100,6 +100,7 @@ def finetune_kdd_model(model, loss, optimizer, train_set, val_set, config):
     val_f1_score_list = []
 
     best_val_acc = 0  # Initialize variable to keep track of best validation accuracy
+    best_val_f1 = 0
 
     for epoch in range(1, config["kdd_finetune"]["epoch"] + 1):
         epoch_start_time = time.time()
@@ -117,9 +118,16 @@ def finetune_kdd_model(model, loss, optimizer, train_set, val_set, config):
             f"Epoch {epoch}/{config['kdd_finetune']['epoch']}, Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}, "
             f"Accuracy: {val_acc:.4f}, F1 Score: {val_f1:.4f}, Time: {epoch_runtime}")
 
-        # Save the best model based on validation accuracy
-        if val_acc >= best_val_acc:
-            best_val_acc = val_acc
+        # # Save the best model based on validation accuracy
+        # if val_acc >= best_val_acc:
+        #     best_val_acc = val_acc
+        #     torch.save(
+        #         model.state_dict(), os.path.join(config["general"]["finetune_model"], "best_model.pth")
+        #     )
+            
+        # Save the best model based on f1 accuracy
+        if val_f1 >= best_val_f1:
+            best_val_f1 = val_f1
             torch.save(
                 model.state_dict(), os.path.join(config["general"]["finetune_model"], "best_model.pth")
             )
