@@ -99,12 +99,19 @@ def pretrain_kdd_model(model, loss, optimizer, pretrain_data, config):
     model = model.to(device)
 
     train_loss_list = []
+    best_loss = float('inf')  # Initialize best loss to a very high value
 
     for epoch in range(1, config["kdd_pretrain"]["epoch"] + 1):
         epoch_start_time = time.time()
 
         train_loss = pretrain_kdd_epoch(model, loss, optimizer, pretrain_data, config, device, epoch, l2_reg=False)
         train_loss_list.append(train_loss)
+        
+        # Save the model if it has the best loss so far
+        if train_loss <= best_loss:
+            best_loss = train_loss
+            best_model_path = os.path.join(config["general"]["pretrain_model"], f"best_model.pth")
+            torch.save(model.state_dict(), best_model_path)
 
         epoch_runtime = time.time() - epoch_start_time
 
@@ -154,7 +161,7 @@ def pretrain_kdd_epoch(model, loss, optimizer, pretrain_data, config, device, ep
         total_loss.backward()
 
         # torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=1.0)
-        # torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=4.0)
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=4.0)
         optimizer.step()
 
         with torch.no_grad():

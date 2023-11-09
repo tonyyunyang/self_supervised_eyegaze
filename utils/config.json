@@ -23,7 +23,7 @@
   "kdd_finetune": {
     "epoch": 5,
     "lr": 0.0002,
-    "optimizer": "Adam",
+    "optimizer": "RAdam",
     "weight_decay": null
   },
 
@@ -141,19 +141,19 @@
   "conv1d_10sec_stack": {
     "first": {
       "kernel_size": 10,
-      "stride": 1,
+      "stride": 2,
       "dilation": 1,
       "padding": 0
     },
     "second": {
-      "kernel_size": 20,
-      "stride": 1,
+      "kernel_size": 10,
+      "stride": 2,
       "dilation": 1,
       "padding": 0
     },
     "thrid": {
-      "kernel_size": 20,
-      "stride": 10,
+      "kernel_size": 10,
+      "stride": 2,
       "dilation": 1,
       "padding": 0
     }

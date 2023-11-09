@@ -23,15 +23,16 @@ def main():
     config["general"]["window_size"] = 300
     config["general"]["overlap"] = 0.8
     config["general"]["batch_size"] = 128
-    config["kdd_pretrain"]["epoch"] = 2000
+    config["kdd_pretrain"]["epoch"] = 3000
     config["kdd_finetune"]["epoch"] = 6000
 
     config["kdd_model"]["d_hidden"] = 16
     config["kdd_model"]["d_ff"] = 128
     config["kdd_model"]["n_heads"] = 8
     config["kdd_model"]["n_layers"] = 8
+    config["kdd_model"]["dropout"] = 0.1
     
-    config["kdd_model"]["pos_encoding"] = "fixed"
+    config["kdd_model"]["pos_encoding"] = "learnable"
     config["kdd_model"]["activation"] = "gelu"
     config["kdd_model"]["norm"] = "LayerNorm"
     config["kdd_model"]["projection"] = "convolution"
