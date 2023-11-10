@@ -112,7 +112,7 @@ def kdd_model4pretrain_stack_test(config, feat_dim):
         norm=config["kdd_model"]["norm"],
         embedding=config["kdd_model"]["projection"],
         freeze=config["general"]["freeze"],
-        conv_config=config["conv1d_10sec_stack"],
+        conv_config=config["conv1d_10sec_stack"], #conv1d_15sec_stack
     )
 
     print("Model:\n{}".format(model))
@@ -308,7 +308,7 @@ def kdd_model4finetune_stack_test(config, feat_dim, num_classes):
         norm=config["kdd_model"]["norm"],
         embedding=config["kdd_model"]["projection"],
         freeze=config["general"]["freeze"],
-        conv_config=config["conv1d_10sec_stack"],
+        conv_config=config["conv1d_10sec_stack"], #conv1d_15sec_stack
     )
 
     model_path = os.path.join(config["general"]["pretrain_model"], "continue_model.pth")

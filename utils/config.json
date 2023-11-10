@@ -149,20 +149,20 @@
 
   "conv1d_10sec_stack": {
     "first": {
-      "kernel_size": 5,
-      "stride": 1,
+      "kernel_size": 10,
+      "stride": 5,
       "dilation": 1,
       "padding": 0
     },
     "second": {
-      "kernel_size": 5,
-      "stride": 1,
+      "kernel_size": 10,
+      "stride": 5,
       "dilation": 1,
       "padding": 0
     },
     "thrid": {
-      "kernel_size": 5,
-      "stride": 1,
+      "kernel_size": 10,
+      "stride": 5,
       "dilation": 1,
       "padding": 0
     }
@@ -171,19 +171,19 @@
   "conv1d_15sec_stack": {
     "first": {
       "kernel_size": 10,
-      "stride": 1,
+      "stride": 2,
       "dilation": 1,
       "padding": 0
     },
     "second": {
-      "kernel_size": 20,
-      "stride": 1,
+      "kernel_size": 10,
+      "stride": 4,
       "dilation": 1,
       "padding": 0
     },
     "thrid": {
-      "kernel_size": 20,
-      "stride": 10,
+      "kernel_size": 10,
+      "stride": 6,
       "dilation": 1,
       "padding": 0
     }
