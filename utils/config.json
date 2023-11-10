@@ -149,20 +149,20 @@
 
   "conv1d_10sec_stack": {
     "first": {
-      "kernel_size": 10,
-      "stride": 5,
+      "kernel_size": 30,
+      "stride": 15,
       "dilation": 1,
       "padding": 0
     },
     "second": {
-      "kernel_size": 10,
-      "stride": 5,
+      "kernel_size": 5,
+      "stride": 1,
       "dilation": 1,
       "padding": 0
     },
     "thrid": {
-      "kernel_size": 10,
-      "stride": 5,
+      "kernel_size": 5,
+      "stride": 1,
       "dilation": 1,
       "padding": 0
     }

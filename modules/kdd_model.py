@@ -311,7 +311,7 @@ def kdd_model4finetune_stack_test(config, feat_dim, num_classes):
         conv_config=config["conv1d_10sec_stack"], #conv1d_15sec_stack
     )
 
-    model_path = os.path.join(config["general"]["pretrain_model"], "continue_model.pth")
+    model_path = os.path.join(config["general"]["pretrain_model"], "best_model.pth")
 
     state_dict = torch.load(model_path)
 
