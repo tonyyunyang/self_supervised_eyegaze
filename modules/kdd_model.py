@@ -675,13 +675,13 @@ class TSTransformerEncoder(nn.Module):
             inp = self.project_inp(inp)
         elif self.embedding == "convolution":
             inp = X.permute(0, 2, 1)  # permute to (batch_size, feat_dim, seq_length)
-            inp = self.project_inp(inp)
+            inp = self.project_inp(inp) * math.sqrt(self.d_model)
             inp = inp.permute(2, 0, 1)  # permute back to (seq_length, batch_size, d_model)
         else:
             print(f"Either linear / convolution")
             sys.exit()
 
-        # inp = self.pos_enc(inp)  # add positional encoding
+        inp = self.pos_enc(inp)  # add positional encoding
         # NOTE: logic for padding masks is reversed to comply with definition in MultiHeadAttention, TransformerEncoderLayer
         output = self.transformer_encoder(inp)  # (seq_length, batch_size, d_model)
         output = self.act(output)  # the output transformer encoder/decoder embeddings don't include non-linearity
@@ -1116,13 +1116,13 @@ class TSTransformerEncoderStackTest(nn.Module):
             inp = self.project_inp(inp)
         elif self.embedding == "convolution":
             inp = X.permute(0, 2, 1)  # permute to (batch_size, feat_dim, seq_length)
-            inp = self.project_inp(inp)
+            inp = self.project_inp(inp) * math.sqrt(self.d_model)
             inp = inp.permute(2, 0, 1)  # permute back to (seq_length, batch_size, d_model)
         else:
             print(f"Either linear / convolution")
             sys.exit()
 
-        # inp = self.pos_enc(inp)  # add positional encoding
+        inp = self.pos_enc(inp)  # add positional encoding
         # NOTE: logic for padding masks is reversed to comply with definition in MultiHeadAttention, TransformerEncoderLayer
         output = self.transformer_encoder(inp)  # (seq_length, batch_size, d_model)
         output = self.act(output)  # the output transformer encoder/decoder embeddings don't include non-linearity
@@ -1354,13 +1354,13 @@ class TSTransformerEncoderClassiregressor(nn.Module):
             inp = self.project_inp(inp) * math.sqrt(self.d_model)  # [seq_length, batch_size, d_model] project input vectors to d_model dimensional space
         elif self.embedding == "convolution":
             inp = X.permute(0, 2, 1)  # permute to (batch_size, feat_dim, seq_length)
-            inp = self.project_inp(inp)
+            inp = self.project_inp(inp) * math.sqrt(self.d_model)
             inp = inp.permute(2, 0, 1)  # permute back to (seq_length, batch_size, d_model)
         else:
             print(f"Either linear / convolution")
             sys.exit()
 
-        # inp = self.pos_enc(inp)  # add positional encoding
+        inp = self.pos_enc(inp)  # add positional encoding
         # NOTE: logic for padding masks is reversed to comply with definition in MultiHeadAttention, TransformerEncoderLayer
         # output = self.transformer_encoder(inp, src_key_padding_mask=~padding_masks)  # (seq_length, batch_size, d_model)
         output = self.transformer_encoder(inp)  # (seq_length, batch_size, d_model)
@@ -1674,13 +1674,13 @@ class TSTransformerEncoderClassiregressorStackTest(nn.Module):
             inp = self.project_inp(inp) * math.sqrt(self.d_model)  # [seq_length, batch_size, d_model] project input vectors to d_model dimensional space
         elif self.embedding == "convolution":
             inp = X.permute(0, 2, 1)  # permute to (batch_size, feat_dim, seq_length)
-            inp = self.project_inp(inp)
+            inp = self.project_inp(inp) * math.sqrt(self.d_model)
             inp = inp.permute(2, 0, 1)  # permute back to (seq_length, batch_size, d_model)
         else:
             print(f"Either linear / convolution")
             sys.exit()
 
-        # inp = self.pos_enc(inp)  # add positional encoding
+        inp = self.pos_enc(inp)  # add positional encoding
         # NOTE: logic for padding masks is reversed to comply with definition in MultiHeadAttention, TransformerEncoderLayer
         # output = self.transformer_encoder(inp, src_key_padding_mask=~padding_masks)  # (seq_length, batch_size, d_model)
         output = self.transformer_encoder(inp)  # (seq_length, batch_size, d_model)
