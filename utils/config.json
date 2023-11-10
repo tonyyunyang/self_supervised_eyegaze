@@ -60,7 +60,8 @@
     "pos_encoding": "learnable",
     "activation": "gelu",
     "norm": "BatchNorm",
-    "projection": "convolution"
+    "projection": "convolution",
+    "num_layers_to_pop": null
   },
 
   "limu_model": {

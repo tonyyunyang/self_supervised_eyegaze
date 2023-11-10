@@ -243,6 +243,62 @@ def kdd_model4finetune_convstack(config, feat_dim, num_classes):
     return model
 
 
+def kdd_model4finetune_pop_test(config, feat_dim, num_classes):
+    max_seq_len = config["general"]["window_size"]
+
+    model = TSTransformerEncoderClassiregressorTest(
+        feat_dim,
+        max_seq_len,
+        config["kdd_model"]["d_hidden"],
+        config["kdd_model"]["n_heads"],
+        config["kdd_model"]["n_layers"] - config["kdd_model"]["num_layers_to_pop"],
+        config["kdd_model"]["d_ff"],
+        num_classes,
+        dropout=config["kdd_model"]["dropout"],
+        pos_encoding=config["kdd_model"]["pos_encoding"],
+        activation=config["kdd_model"]["activation"],
+        norm=config["kdd_model"]["norm"],
+        embedding=config["kdd_model"]["projection"],
+        freeze=config["general"]["freeze"],
+        conv_config=config["conv1d_10sec"],
+    )
+
+    model_path = os.path.join(config["general"]["pretrain_model"], "best_model.pth")
+    state_dict = torch.load(model_path)
+
+    # Pop output layers
+    for key in list(state_dict.keys()):
+        if key.startswith('output_layer'):
+            state_dict.pop(key)
+            print(f"Popped layer {key}")
+
+    # Pop transformer encoder layers
+    num_layers_to_pop = config["kdd_model"]["num_layers_to_pop"]
+    for i in range(num_layers_to_pop):
+        layer_key_prefix = f"transformer_encoder.layers.{7 - i}"  # Adjust index for outermost layers
+        for key in list(state_dict.keys()):
+            if key.startswith(layer_key_prefix):
+                state_dict.pop(key)
+                print(f"Popped layer {key}")
+
+    model.load_state_dict(state_dict, strict=False)
+    print('Loaded model from {}'.format(model_path))
+
+    if config["general"]["freeze"]:
+        for name, param in model.named_parameters():
+            if name.startswith('output_layer'):
+                param.requires_grad = True
+            else:
+                param.requires_grad = False
+
+    print("Model:\n{}".format(model))
+    print("Total number of parameters: {}".format(count_parameters(model)))
+    print("Trainable parameters: {}".format(count_parameters(model, trainable=True)))
+
+    return model
+
+
+
 def kdd_model4finetune_test(config, feat_dim, num_classes):
     max_seq_len = config["general"]["window_size"]
 
